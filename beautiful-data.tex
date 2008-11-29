@@ -29,6 +29,45 @@
 \begin{document}
 \maketitle 
 
+\section{Introduction}
+
+Motivation: housing crisis.  Can we use housing sale data to quantify it more accurately?  How do our findings compare to findings reported by the media?  Can we locate market segments that were particularly badly hit?
+
+All data and code is available from our git repository - \url{https://github.com/hadley/sfhousing}.  You can see some of the false starts that we made.  Both code and data are licensed with the MIT license. 
+
+\section{How did we get the data?}
+
+How did we get the data?
+
+\begin{itemize}
+  \item SF chronicle url detective work.
+  \item Use R to generate dates.  Use wget to get files
+  \item R to parse and combine into single csv file
+\end{itemize}
+
+Excerpt from final data.  Other data cleaning problems.
+
+\section{Geocoding} 
+
+How to geocode 400,000 addresses?  
+
+Web services - google, yahoo - restrictive licensing clauses.
+
+UCGS.  How long it look to geocode them all.  
+
+Bar chart showing address quality.  Map showing addresses in SF - compare to map. You can see features like golden gate park and so on.
+
+\section{Analysis}
+
+Overall CA sales and average prices.
+
+City level break down.
+
+Clustering.
+
+Other ideas?
+
+\section{Conclusions}
 
 \bibliography{references}
 
