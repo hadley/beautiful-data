@@ -76,7 +76,7 @@ Alameda County,Alameda,94501,1316 Grove Street,637000,3,2700,1168,1910,2003-04-2
 7,NA
 \end{verbatim}
 
-This is a less human readable, but it's a very standard format that practically any tool can read in.  Another minor advantage of this more compact form (not repeating the field names all the time) was reduced storage requirements: 88 vs 45 meg.  Note that R uses {\tt NA} to represent missing values.
+This is a little less human readable, but it's a very standard format that practically any tool can read in.  Another minor advantage of this more compact form (not repeating the field names all the time) was reduced storage requirements: 88 vs 45 meg.  Note that R uses {\tt NA} to represent missing values.
 
 Takes just a few minutes to parse all 293 data files.  But a few hours tweaking the parser to get all the edge cases.  Things like stripping \$ and , out of prices to get a number.  And parsing the sold dates, which weren't in a totally consistent format.
 
@@ -91,6 +91,13 @@ Web services - google, yahoo - restrictive licensing clauses.
 UCGS.  How long it look to geocode them all.  Send paragraph to Dan Goldberg to check for accuracy.  Never hurts to spend a lot of time checking the data at this level as everything else depends on it.  However, will omit a lot of the work we did because it's more interesting to talk about the findings.
 
 Bar chart showing address quality.  Make sure to have percent on the y-axis.  Won't throw out bad matches right away, because we need varying levels of accuracy for different purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.
+
+%       QUALITY_ADDRESS_RANGE_INTERPOLATION 75.30\%
+%             QUALITY_EXACT_PARCEL_CENTROID  9.85\%
+% QUALITY_ZIP_CODE_TABULATION_AREA_CENTROID  7.11\%
+%       QUALITY_COUNTY_SUBDIVISION_CENTROID  0.12\%
+%         QUALITY_UNIFORM_LOT_INTERPOLATION  0.04\%
+
 
 \section{Analysis}
 
@@ -108,9 +115,9 @@ Figure~\ref{fig:daily} shows average daily sales and prices over the course of t
 
 \subsection{Adjusting for inflation}
 
-CPI data - \url{http://www.bls.gov/CPI}.  This is a common theme in data analysis: we need to combine our original data with new data that provides context and helps us understand it better.  In this case, we want to control for changes in relative buying power (i.e.\ inflation).  Even over this relatively short time span it's a bad idea to ignore inflation: \$1\,000 2004 dollars, would be worth\$1\,170 today.
+CPI data - \url{http://www.bls.gov/CPI}.  This is a common theme in data analysis: we need to combine our original data with new data that provides context and helps us understand it better.  In this case, we want to control for changes in relative buying power (i.e.\ inflation).  Even over this relatively short time span it's a bad idea to ignore inflation: \$1\,000 2004 dollars would be worth\$1\,170 today.
 
-We used the CPI time series for the West coast.
+We used the CPI time series for the West coast.  Series name.
 
 Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affected of adjusting for inflation.  Failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  All prices in the remainder of this paper will be inflation adjusted.
 
@@ -128,15 +135,70 @@ What is a decile?  How were they calculated?
 
 Increasing disparity between top and bottom deciles.
 
-\subsection{Accelerating foreclosures}
-
-With the very cheap we see a large growth in the number of sales.
+% \subsection{Accelerating foreclosures}
+% 
+% With the very cheap we see a large growth in the number of sales.
 
 \subsection{Geographic differences}
 
-City level break down.
+Big city level break down: chose all cities with more than 2910 sales in total, an average of 10 sales per week.  Gives us 59 cities in California with a total of 423,527 (out of an original 521,726, 81\% of the original data).  
 
-Clustering.
+% Figure~\ref{fig:big-cities} shows the counts for the 20 biggest cities.
+% 
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=0.5\linewidth]{big-cities}
+%   \caption{Total housing sales for the 20 biggest cities.}
+%   \label{fig:big-cities}
+% \end{figure}
+
+From this reduced data we then calculated the number of sales and the average sale price for each city for each week.  Figure~\ref{fig:spaghetti} shows this data, with each city as a different line.  Statisticians have an evocative name for this type of plot: the spaghetti plot.  It's very hard to see anything in the big jumble of lines.  We're going to use two techniques to bring some order to the mess.  First, we're going to smooth the lines to focus on the overall trend, removing short-term variation that we're not so interested in.  Next, we'll attempt to cluster the cities in groups that show similar patterns.
+
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=\linewidth]{cities-price}
+  \caption{Average sale price for each week for each city.  This type of plot is often called a spaghetti plot for obvious reasons}
+  \label{fig:spaghetti}
+\end{figure}
+
+Generalised additive models ({\sc gam}) are a generalisation of linear models \citep{wood:2006}.  A linear model has the basic form $y = a + b * x$, and {\sc gam}s generalise this to $y = f(x)$ where x is a smooth line.  A linear model is special case of a {\sc gam} because lines are very smooth functions!  Thin plate regression splines.  We define wiggliness by the second derivative and then penalise it: the final result is a compromise between fit and wiggliness.
+
+But don't worry if you don't understand the details: the gist is that {\sc gam}s are a useful way of removing noisy short-term effects and focussing on the general smooth trend.  This is what we want: for this investigation, we're not interested in changes from week to week or day to day, we're interested in exploring the long term changes related to the housing crisis.
+
+Displaying the smooth curves is an improvement, as in Figure~\ref{fig:smoothed}, but there are still a lot of the lines in that plot and we might be missing important findings.  We'll make one other change to the data, we'll index each city: this removes the overall average price of the city and put's it onto an interpretable scale: proportional change in price since the start of the data.  
+
+Instead of displaying them all together, we display each city on a separate plot, as in Figure~\ref{fig:individual}.  This takes up a lot of room, but if you have a big screen or a good printer it's very worthwhile.  We can pick out some interesting patterns: San Francisco, Berkeley and Mountain view all show less of a peak and less of a drop: are more valuable than in 2004.  Other cities show big peaks and big drops: Oakley, Vallejo, and San Pablo.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5 \linewidth]{cities-smooth}%
+  \includegraphics[width=0.5 \linewidth]{cities-indexed}
+  \caption{Smoothed city-level weekly average sale prices.  Compared to the non-smoothed version it's easier to see the long-term trends, but it's still not particularly easy}
+  \label{fig:smoothed}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9 \linewidth]{cities-individual}
+  \caption{Individual plots for each city.  Axis labels have been removed to save space, but the same limits are used for each plot.}
+  \label{fig:individual}
+\end{figure}
+
+After a few false starts we released that there were two main features that seemed to distinguish the different cities: the height of the peak in the boom and the most recent plummet.  Figure~\ref{fig:clustering} shows one way of clustering the cities into three groups.  Note how the groups are basically formed along the diagonal: it's the difference between the peak and the plummet that seems to be telling us the most.  Figure~\ref{fig:clustered} shows the result of the clustering, with each of the three groups displayed in its own panel.  The groups are somewhat arbitrary (we could shift the boundaries a little in either direction and have little effect)
+
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=0.75 \linewidth]{cities-clustering}
+  \caption{A scatterplot of cities with height at peak on x axis, and most recent value (plummet) on y axis.  The cities have been clustered into three groups.  The closer a city is to the line in the top left corner, the less the effect of the housing crisis on average prices.}
+  \label{fig:clustering}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{cities-indexed-clustered}
+  \caption{The index sale price time series for the three clustered identified in Figure~\ref{fig:clustering}.  Cluster one includes cities with low peak and no plummet, cluster two cities with high peak and big plummet, and cluster three is somewhere in betwee.}
+  \label{fig:clustered}
+\end{figure}
 
 \section{Watching city growth}
 
@@ -159,7 +221,7 @@ Tools: shell (wget, awk); R (ggplot2, plyr, reshape).
 Note about graphics: can churn out rough versions for exploration very quickly - takes more time to polish them for publication.  Clarify story, remove extraneous elements and ensure that it supports the text.
 
 
-
+% bibtool -x beautiful-data.aux > references.bib
 \bibliography{references}
 
 \end{document}
