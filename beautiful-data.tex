@@ -119,6 +119,8 @@ CPI data - \url{http://www.bls.gov/CPI}.  This is a common theme in data analysi
 
 We used the CPI time series for the West coast.  Series name.
 
+To compute a measure of inflation, we index this time series at the first date in the data.  Indexing means we divide all of the values by the first value: this converts the values into proportions, which makes it easy to read the effect of inflation from the graph.  A value of 1.1 represent a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout this chapter.
+
 Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affected of adjusting for inflation.  Failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  All prices in the remainder of this paper will be inflation adjusted.
 
 \begin{figure}[htbp]
@@ -130,16 +132,38 @@ Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the aff
 \end{figure}
 
 \subsection{The rich get richer and the poor get poorer}
+% explore-deciles.r
 
-What is a decile?  How were they calculated?
+We were also interested to investigate whether the housing crisis has equally affect the rich (people owning the most expensive houses) and the poor (the people only the least expensive houses).  To explore this, for each month of sales, we calculate price deciles.  The deciles are the nine numbers that split the price into ten bins each containing the same number of houses,  from least expensive to most expensive.  For example, ...
 
-Increasing disparity between top and bottom deciles.
+Figure~\ref{fig:decile-raw} shows how the deciles have changed over time.  The top line is the number that 90\% of houses are less than, and the bottom line represents the price that 10\% of houses are cheaper than.  We can see the effect of the housing bubble in mid 2007, particularly in the most expensive houses.  However, it's probably better to look at the indexed values, as in Figure~\ref{fig:decile-index}.  Here we see that the cheaper houses peaked earlier and had a much sharper drop.  The cheapest houses lost 43\% of their value compared to only 9\% for the most expensive houses.
 
-% \subsection{Accelerating foreclosures}
-% 
-% With the very cheap we see a large growth in the number of sales.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\linewidth]{decile-raw}
+  \caption{Average house price within each decile.  Cheaper houses (lower deciles) are coloured lighter.} 
+  \label{fig:decile-raw}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\linewidth]{decile-ind}
+  \caption{Indexed house price within each decile.  The average price of cheaper houses increased more rapidly, and fell to much lower lows.}
+  \label{fig:decile-ind}
+\end{figure}
+
+Another way to look at this inequality is Figure~\ref{decile-rel}.  Here we have standardised the price of an ``average'' home to one.  Relative to an average home, expensive houses have been getting more expensive and cheap houses cheaper.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\linewidth]{decile-rel}
+  \caption{House prices, relative to the price of the median priced home.  The disparity in home prices is increasing.}
+  \label{fig:decile-rel}
+\end{figure}
 
 \subsection{Geographic differences}
+
+% See explore-city.r for code.
 
 Big city level break down: chose all cities with more than 2910 sales in total, an average of 10 sales per week.  Gives us 59 cities in California with a total of 423,527 (out of an original 521,726, 81\% of the original data).  
 
@@ -165,7 +189,7 @@ Generalised additive models ({\sc gam}) are a generalisation of linear models \c
 
 But don't worry if you don't understand the details: the gist is that {\sc gam}s are a useful way of removing noisy short-term effects and focussing on the general smooth trend.  This is what we want: for this investigation, we're not interested in changes from week to week or day to day, we're interested in exploring the long term changes related to the housing crisis.
 
-Displaying the smooth curves is an improvement, as in Figure~\ref{fig:smoothed}, but there are still a lot of the lines in that plot and we might be missing important findings.  We'll make one other change to the data, we'll index each city: this removes the overall average price of the city and put's it onto an interpretable scale: proportional change in price since the start of the data.  
+Displaying the smooth curves is an improvement, as in Figure~\ref{fig:smoothed}.  Note the big difference in scales: smoothing the data has removed the very large spikes which represent the sales of very expensive houses.  But there are still a lot of the lines in that plot and we might be missing important findings.  We'll make one other change to the data, we'll index each city: this removes the overall average price of the city and put's it onto an interpretable scale: proportional change in price since the start of the data.  
 
 Instead of displaying them all together, we display each city on a separate plot, as in Figure~\ref{fig:individual}.  This takes up a lot of room, but if you have a big screen or a good printer it's very worthwhile.  We can pick out some interesting patterns: San Francisco, Berkeley and Mountain view all show less of a peak and less of a drop: are more valuable than in 2004.  Other cities show big peaks and big drops: Oakley, Vallejo, and San Pablo.
 
@@ -188,7 +212,7 @@ After a few false starts we released that there were two main features that seem
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics[width=0.75 \linewidth]{cities-clustering}
+    \includegraphics[width=0.7 \linewidth]{cities-clustering}
   \caption{A scatterplot of cities with height at peak on x axis, and most recent value (plummet) on y axis.  The cities have been clustered into three groups.  The closer a city is to the line in the top left corner, the less the effect of the housing crisis on average prices.}
   \label{fig:clustering}
 \end{figure}
@@ -196,7 +220,7 @@ After a few false starts we released that there were two main features that seem
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{cities-indexed-clustered}
-  \caption{The index sale price time series for the three clustered identified in Figure~\ref{fig:clustering}.  Cluster one includes cities with low peak and no plummet, cluster two cities with high peak and big plummet, and cluster three is somewhere in betwee.}
+  \caption{The index sale price time series for the three clustered identified in Figure~\ref{fig:clustering}.  Cluster one includes cities with low peak and no plummet, cluster two cities with high peak and big plummet, and cluster three is somewhere in between.  The thick lines represent smoothed patterns within each cluster.}
   \label{fig:clustered}
 \end{figure}
 
