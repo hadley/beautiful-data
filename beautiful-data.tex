@@ -37,15 +37,15 @@
 
 \section{Introduction}
 
-Motivation: housing crisis.  Can we use housing sale data to quantify it more accurately?  How do our findings compare to findings reported by the media?  Can we locate market segments that were particularly badly hit?
+There has been much talk of the housing crisis in the media, and much speculation who has been worst hit and how long it might last.  In this chapter we're going to take a more quantitative look at the housing crisis by exploring data about the sales half a million homes in the Bay Area.  We are going to use a few simple statistical tools, but mostly we will focus on graphical displays of the data.  (You might wonder why we chose to explore the Bay Area given that none of us live there, but it revolves around the availability of the data.)
 
-All data and code is available from our git repository - \url{https://github.com/hadley/sfhousing}.  You can see some of the false starts that we made.  Both code and data are licensed with the MIT license. We'll illustrate snippets of code here: you probably won't be familiar with R, but you should still be able to get the gist of it.  Mention the file name next to each section in which it is used.
+This is a large data and we have only just scratched the surface.  If the data has caught your interest and you'd like to follow our work in more detail and try out some your own ideas, we have made all data and code available in a git repository at \url{https://github.com/hadley/sfhousing}. Both code and data are licensed with the permissive MIT license.  We'll illustrate snippets of code and fragments of the data inline, but each section of this chapter will also point you to a matching file online.  The files don't cover the exactly content as each section: you can see some of the dead ends we tried, and some of the plots that weren't quite good enough to make it into the plot.  
+
+We're going use R, a statistical programming and data analysis environment, for most of the analysis.  We'll discuss R and a few other we used in more depth in the conclusion, but for now lets dive into the data.
 
 \section{How did we get the data?}
 
-Like many of our for fun data explorations, this all started when we discovered an interesting data source: the weekly housing sales data provided by the SF Chronicle (\url{}). We had initially planned on scraping the data off the website, but a little detective work revealed that the data is already available in a machine readable form. 
-
-For each week, there was a text file containing all of the data in the following form:
+Finding relevant datasets for a particular problem is challenging and requires a lot of exploration and investigation.  We were particularly luckily to stumble over the the weekly housing sales update for the Bay Area produced by the SF Chronicle, \url{http://www.sfgate.com/homesales/}.  Initially we had planned on scraping the data off the website, but a little detective work revealed that the data is already available in a machine readable form.  Each human readable weekly summary points to a machine readable text file that looks like this: 
 
 \begin{verbatim}
 rowid: 1
@@ -61,9 +61,9 @@ bsqft: 1834
 year: 1910
 \end{verbatim}
 
-Each file was available at a url of the form \url{http://www.sfgate.com/c/a/year/month/day/REHS.tbl}.  We used R to generate a sequence of Sunday's from the first on record, 2003-04-27, which we found with a little more detective work, to the most recent.  With those dates in hand, we made a list of all the urls and then used the command line tool {\tt wget} to download them all.   We used wget because of it's support for resuming where it left off.  If our internet connection went down or we moved our laptop to another network we didn't need to worry about starting for scratch.  Saves a lot of time!
+Each weeks worth of data is available at a url of the form \url{http://www.sfgate.com/c/a/year/month/day/REHS.tbl}.  This is pretty convenient, but we need to generate a list of all Sundays from the first on record, 2003-04-27 (which we found on the archive page), to the most recent, 2008-11-16.  We then generated a list of urls in the correct format and then downloaded them with command line tool {\tt wget}. We used wget because if interrupted it can easily resume where it left off: this saves a lot of time!
 
-The next step was to get the data into a more standard format: we chose csv because each file had (approximately) the same fields, and it's a format that all statistical packages (and excel etc) can import and export.  This isn't a standard data format, but nevertheless it's fairly easy to write a parser to deal with it.  This gives us a file like follows:
+With all the data on a local computer, the next step was to convert the data into a more standard format.  We use csv (comma separated values) for most datasets: although there's no standards format that exactly describes the structure of csv files, for most statistical data sets it's not complicated and every statistical package (and Excel!) can read it in without problems.   This gives us a file like follows:
 
 \begin{verbatim}
 county,city,zip,street,price,br,lsqft,bsqft,year,date,datesold
@@ -76,28 +76,27 @@ Alameda County,Alameda,94501,1316 Grove Street,637000,3,2700,1168,1910,2003-04-2
 7,NA
 \end{verbatim}
 
-This is a little less human readable, but it's a very standard format that practically any tool can read in.  Another minor advantage of this more compact form (not repeating the field names all the time) was reduced storage requirements: 88 vs 45 meg.  Note that R uses {\tt NA} to represent missing values.
+This is a little less human readable (there's much less white space), but it's a standard format that we can easily work with.  Another minor advantage compared to the original format was reduced storage requirements: a 50\% reduction from 90 to 45 meg.  If you look at the sample data you might notice something that needs a little explanation: the {\bf NA}s.  These are what R uses to represent missing values.
 
-Takes just a few minutes to parse all 293 data files.  But a few hours tweaking the parser to get all the edge cases.  Things like stripping \$ and , out of prices to get a number.  And parsing the sold dates, which weren't in a totally consistent format.
+It takes just a few minutes to parse all 293 data files and get {\tt house-sales.csv}, a csv file with 521,726 observations and 11 variables.  However, it tooks a few hours of tweaking the parser to get all the edge cases right: we needed to convert prices to regular numbers (by out \$ and ,), parse the dates into a consistent format, and fill in missing values for fields that didn't occur in all of the tables. 
 
-Total of 521,726 records.  Had to update mid-way throughout analysis procedure to get the latest data.  This is where having a well though-out script really helps.  Very common in real-life statistical analysis: data is always changing because new data is collected, or old data is corrected.  
+We wrote a series of R and shell scripts to perform all these tasks.  This is a lot of work but really pays off when your data is changing.  In our case, we updated just before writing up the paper so that we had the latest data off the website.  Data changes a lot more than you might thing.  Even when your data is about something that has already happened, often the data will change  as errors are discovered and fixed.
 
 \section{Geocoding} 
 
-How to geocode 400,000 addresses?  
+When we first looked at this data, we thought it would be really important to geocode all the addresses.  That is, we wanted to associate a latitude and longitude with each address so that it would be easy to explore fine grained spatial effects.  In the end, we didn't end up using this extra data as much as we thought we would, but it's still an interesting challenge: how can you geocode approximately 400,000 addresses?  
 
-Web services - google, yahoo - restrictive licensing clauses.
+We started by looking at the well known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on number of requests and heavy restrictions on what we could do with the data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a much more open service, the  USC WebGIS Services provided by the GIS research laboratory at the University of Southern California, \url{https://webgis.usc.edu/}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode XXXX addresses per day, so it took us XX days to do all 400,000.  
 
-UCGS.  How long it look to geocode them all.  Send paragraph to Dan Goldberg to check for accuracy.  Never hurts to spend a lot of time checking the data at this level as everything else depends on it.  However, will omit a lot of the work we did because it's more interesting to talk about the findings.
+As well as latitude and longitude, the results also include an indication of how accurate the geocoding is.  10\%  percent of the addresses were located exactly based on city records for that street number (extremely accurate), another 75\% percent were located by interpolating between the numbers at each end of a city block (very accurate), 7\% to the centre of the zip code (not very accurate) and the remainder were only located to the centre of the city or not at all.  
 
-Bar chart showing address quality.  Make sure to have percent on the y-axis.  Won't throw out bad matches right away, because we need varying levels of accuracy for different purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.
+It's worth spending a lot of time with this data to ensure it's accurate.  If it's not, any problems will propagate through to the rest of our analysis.  We discovered quite a few unusual locations!  However, we will omit most of the work we did because it's more interesting to talk about the findings.  Regardless, we never want to completely throw out bad matches, because we need varying levels of accuracy for different purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.  Instead of removing the record, we use R's missing values to indicate that we don't really know the precise location of that address.  This ensures that any location with a suspicious geocoding will automatically be dropped from any analysis that uses latitude and longitude.
 
 %       QUALITY_ADDRESS_RANGE_INTERPOLATION 75.30\%
 %             QUALITY_EXACT_PARCEL_CENTROID  9.85\%
 % QUALITY_ZIP_CODE_TABULATION_AREA_CENTROID  7.11\%
 %       QUALITY_COUNTY_SUBDIVISION_CENTROID  0.12\%
 %         QUALITY_UNIFORM_LOT_INTERPOLATION  0.04\%
-
 
 \section{Analysis}
 
