@@ -86,11 +86,9 @@ We wrote a series of R and shell scripts to perform all these tasks.  This is a 
 
 When we first looked at this data, we thought it would be really important to geocode all the addresses.  That is, we wanted to associate a latitude and longitude with each address so that it would be easy to explore fine grained spatial effects.  In the end, we didn't end up using this extra data as much as we thought we would, but it's still an interesting challenge: how can you geocode approximately 400,000 addresses?  
 
-We started by looking at the well known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on number of requests and heavy restrictions on what we could do with the data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a much more open service, the  USC WebGIS Services provided by the GIS research laboratory at the University of Southern California, \url{https://webgis.usc.edu/}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode XXXX addresses per day, so it took us XX days to do all 400,000.  
+We started by looking at the well known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on number of requests and heavy restrictions on what we could do with the data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a much more open service, the  USC WebGIS Services provided by the GIS research laboratory at the University of Southern California, \url{https://webgis.usc.edu/}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode about 80,000 addresses per day, so it took us around 5 days to do all 400,000.  
 
 As well as latitude and longitude, the results also include an indication of how accurate the geocoding is.  10\%  percent of the addresses were located exactly based on city records for that street number (extremely accurate), another 75\% percent were located by interpolating between the numbers at each end of a city block (very accurate), 7\% to the centre of the zip code (not very accurate) and the remainder were only located to the centre of the city or not at all.  
-
-It's worth spending a lot of time with this data to ensure it's accurate.  If it's not, any problems will propagate through to the rest of our analysis.  We discovered quite a few unusual locations!  However, we will omit most of the work we did because it's more interesting to talk about the findings.  Regardless, we never want to completely throw out bad matches, because we need varying levels of accuracy for different purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.  Instead of removing the record, we use R's missing values to indicate that we don't really know the precise location of that address.  This ensures that any location with a suspicious geocoding will automatically be dropped from any analysis that uses latitude and longitude.
 
 %       QUALITY_ADDRESS_RANGE_INTERPOLATION 75.30\%
 %             QUALITY_EXACT_PARCEL_CENTROID  9.85\%
@@ -98,29 +96,36 @@ It's worth spending a lot of time with this data to ensure it's accurate.  If it
 %       QUALITY_COUNTY_SUBDIVISION_CENTROID  0.12\%
 %         QUALITY_UNIFORM_LOT_INTERPOLATION  0.04\%
 
+\section{Data checking}
+
+It's worth spending a lot of time with this data to ensure it's accurate.  If it's not, any problems will propagate through to the rest of our analysis.  We discovered quite a few unusual locations!  However, we will omit most of the work we did because it's more interesting to talk about the findings.  Regardless, we never want to completely throw out bad matches, because we need varying levels of accuracy for different purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.  Instead of removing the record, we use R's missing values to indicate that we don't really know the precise location of that address.  This ensures that any location with a suspicious geocoding will automatically be dropped from any analysis that uses latitude and longitude.
+
 \section{Analysis}
 
-We'll start by looking at number of sales and average prices over all of California, and then zoom into focus on regions of interest.  Finally, we'll look at a few plots that reveal features of the data that allow us to investigate other housing patterns in California.
+When starting an analysis, it's best to start with a very broad overview.  Given that we're interested in the housing crisis, we'll start by looking at weekly sales and average price.  Once we have a feel for the overall patterns, we'll start breaking the data up into smaller pieces and seeing how they compare to each other and to the overall patterns.  We are going to look at two such breakdowns, by house price (from most expensive to least), and my spatial location (within the biggest cities in the bay area).
+
+Figure~\ref{fig:daily} shows weekly sale numbers and average prices for the 293 weeks of the data.  There are a lot of interesting patterns in this data.  The effect of the housing crisis on average prices is striking, with an increasing trend until June 2007 and then a sharp drop.  Sales show a different pattern.  From mid 2006, we see a gradual decrease in sales volume, and then an increasing trend in early 2008.  Maybe by this point house prices had dropped enough that people were shopping for bargains again.
 
 \begin{figure}[htbp]
   \centering
+    \includegraphics[width=0.5 \linewidth]{daily-sales}%
     \includegraphics[width=0.5 \linewidth]{daily-price}%
-    \includegraphics[width=0.5 \linewidth]{daily-sales}
-  \caption{Daily average prices (right) and sales (left)}
+  \caption{Weekly sales (left) and average prices (right).}
   \label{fig:daily}
 \end{figure}
 
-Figure~\ref{fig:daily} shows average daily sales and prices over the course of the data.  The effect of the housing crisis is striking in the average sale prices, with an increasing trend until June 2007 and then a rapid decrease.  Sales show a different pattern.  We see a gradual decrease in number of sales from mid 2006, and then an increasing trend in early 2008. Maybe this is because of people buying foreclosed houses?  We'll look at that in more detail later on.
+The data is over a relatively short period of time (6 years), but we might wonder if it's necessary to adjust for inflation, to ensure that the prices paid in 2003 are comparable to the prices paid today.
 
 \subsection{Adjusting for inflation}
+% explore-prices.r
 
-CPI data - \url{http://www.bls.gov/CPI}.  This is a common theme in data analysis: we need to combine our original data with new data that provides context and helps us understand it better.  In this case, we want to control for changes in relative buying power (i.e.\ inflation).  Even over this relatively short time span it's a bad idea to ignore inflation: \$1\,000 2004 dollars would be worth\$1\,170 today.
+A commonly used reference for determining inflation is the consumer price index ({\sc cpi}) produced by the Bureau of Labor Statistics, \url{http://www.bls.gov/CPI}.  The {\sc CPI} calculates the price of a weighted ``basket'' of frequently purchased consumer goods.  This price is calculated monthly, and we will use the West coast series, series CUUR0400SA0.
+To adjust for inflation, we extract the data for the period data we have housing sales, and at for each month we calculate the ratio between the index at that time and at the end of 2008: we are adjusting all prices to 2008 prices. This is a common pattern in data analysis: we combine our original data with new data that provides context and helps us understand it better.  
 
-We used the CPI time series for the West coast.  Series name.
+% In this case, we want to control for changes in relative buying power (i.e.\ inflation).  Even over this relatively short time span it's a bad idea to ignore inflation: \$1\,000 2004 dollars would be worth\$1\,170 today.
+% 
 
-To compute a measure of inflation, we index this time series at the first date in the data.  Indexing means we divide all of the values by the first value: this converts the values into proportions, which makes it easy to read the effect of inflation from the graph.  A value of 1.1 represent a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout this chapter.
-
-Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affected of adjusting for inflation.  Failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  All prices in the remainder of this paper will be inflation adjusted.
+To show the effect of inflation, we index the CPI time series to the first date in the data.  This means we divide all of the values by the first value, converting the values into proportions, which makes it easy to read the effect of inflation from the graph.  A value of 1.1 represent a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout this chapter.  Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affect of adjusting prices for inflation.  Failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  All prices in the remainder of this paper will be inflation adjusted.
 
 \begin{figure}[htbp]
   \centering
@@ -130,12 +135,16 @@ Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the aff
   \label{fig:inflation}
 \end{figure}
 
+With this basic overview in hand, it's time to start drilling into the details. In the following sections we break the house sales in to smaller groups, first by price and then by location.  We'll see whether the housing crisis has affected all equally, or some more than others.
+
 \subsection{The rich get richer and the poor get poorer}
 % explore-deciles.r
 
-We were also interested to investigate whether the housing crisis has equally affect the rich (people owning the most expensive houses) and the poor (the people only the least expensive houses).  To explore this, for each month of sales, we calculate price deciles.  The deciles are the nine numbers that split the price into ten bins each containing the same number of houses,  from least expensive to most expensive.  For example, ...
+Has the housing crisis equally affected the rich (those who can afford the most expensive houses) and the poor (those can only afford the cheapest houses)?  Has the effect of the crisis been to improve or worsen the relative equality of these two groups?  In this section, we will explore how the crisis has effect the prices broken down by price.  Of course the big caveat here is that we're looking at the Bay Area, so homes will be more expensive than many other places in the country, but we still might expect to see some relatively inequalities.
 
-Figure~\ref{fig:decile-raw} shows how the deciles have changed over time.  The top line is the number that 90\% of houses are less than, and the bottom line represents the price that 10\% of houses are cheaper than.  We can see the effect of the housing bubble in mid 2007, particularly in the most expensive houses.  However, it's probably better to look at the indexed values, as in Figure~\ref{fig:decile-index}.  Here we see that the cheaper houses peaked earlier and had a much sharper drop.  The cheapest houses lost 43\% of their value compared to only 9\% for the most expensive houses.
+To start our exploration, we calculate deciles of price for each month.  The deciles are the nine numbers that 10\%, 20\%, 30\%, 40\%, 50\%, 60\%, 70\%, 80\%, and 90\% of all houses are less than.  This is a succinct summary of the {\it distribution} of the prices for each month: instead of just looking at the average price, we are looking at nine numbers that summarise the complete distribution of the prices.
+
+Figure~\ref{fig:decile-raw} shows how these deciles have changed over time.  The top line is the ninth decile, the price that 90\% of houses are less than, and the bottom line is the first decile, the price that only 10\% of houses are cheaper than.  The line in the middle is the median, the price which half the houses are cheaper than and half are more expensive than.  Each line follows a similar pattern, and we can see the effect of the housing bubble in mid 2007, particularly in the most expensive houses.  
 
 \begin{figure}[htbp]
   \centering
@@ -144,6 +153,8 @@ Figure~\ref{fig:decile-raw} shows how the deciles have changed over time.  The t
   \label{fig:decile-raw}
 \end{figure}
 
+This plot lets us compare the absolute values of each decile, but maybe it is more appropriate to look at the relative prices.  One way to look at the relative price is to compare how each decile has changed from its starting value.  To do this we calculate an index for each decile, just as we did for the {\sc cpi}. Figure~\ref{fig:decile-ind} shows these indices.  Each decile starts at one, and we can see the relative change in prices over time.  What's interesting in this plot is that the cheaper houses (the lighter coloured lines) seem to peak higher and earlier (mid 2005) than the most expensive houses, and then drop more rapidly.  The cheapest houses lost 43\% of their 2003 value compared to only 9\% for the most expensive houses.
+
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-ind}
@@ -151,7 +162,7 @@ Figure~\ref{fig:decile-raw} shows how the deciles have changed over time.  The t
   \label{fig:decile-ind}
 \end{figure}
 
-Another way to look at this inequality is Figure~\ref{decile-rel}.  Here we have standardised the price of an ``average'' home to one.  Relative to an average home, expensive houses have been getting more expensive and cheap houses cheaper.
+Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we have divide all the prices by the price of an average (median) home.  Since the housing crisis, expensive houses have been getting relatively more expensive and cheap houses relatively cheaper.  One effect of the housing crisis has been to increase the difference between the cheapest and most expensive houses.
 
 \begin{figure}[htbp]
   \centering
@@ -161,8 +172,7 @@ Another way to look at this inequality is Figure~\ref{decile-rel}.  Here we have
 \end{figure}
 
 \subsection{Geographic differences}
-
-% See explore-city.r for code.
+% explore-city.r
 
 Big city level break down: chose all cities with more than 2910 sales in total, an average of 10 sales per week.  Gives us 59 cities in California with a total of 423,527 (out of an original 521,726, 81\% of the original data).  
 
@@ -222,6 +232,10 @@ After a few false starts we released that there were two main features that seem
   \caption{The index sale price time series for the three clustered identified in Figure~\ref{fig:clustering}.  Cluster one includes cities with low peak and no plummet, cluster two cities with high peak and big plummet, and cluster three is somewhere in between.  The thick lines represent smoothed patterns within each cluster.}
   \label{fig:clustered}
 \end{figure}
+
+Need to reorder clusters and label.
+
+Should display same clustering for original data.
 
 \section{Watching city growth}
 
