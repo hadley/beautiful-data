@@ -26,7 +26,7 @@
 \usepackage[round,sort&compress,sectionbib]{natbib}
 \bibliographystyle{plainnat}
 
-\title{Beautiful data: The housing crisis in CA}
+\title{Bay area blues: the effect of the housing crisis}
 \author{Deborah F. Swayne and Hadley Wickham}
 \date{\today}
 
@@ -41,7 +41,7 @@ There has been much talk of the housing crisis in the media, and much speculatio
 
 This is a large data and we have only just scratched the surface.  If the data has caught your interest and you'd like to follow our work in more detail and try out some your own ideas, we have made all data and code available in a git repository at \url{https://github.com/hadley/sfhousing}. Both code and data are licensed with the permissive MIT license.  We'll illustrate snippets of code and fragments of the data inline, but each section of this chapter will also point you to a matching file online.  The files don't cover the exactly content as each section: you can see some of the dead ends we tried, and some of the plots that weren't quite good enough to make it into the plot.  
 
-We're going use R, a statistical programming and data analysis environment, for most of the analysis.  We'll discuss R and a few other we used in more depth in the conclusion, but for now lets dive into the data.
+We're going use R, a statistical programming and data analysis environment, for most of the analysis.  We'll discuss R and a few other we used in more depth later on, but for now lets dive into the data.
 
 \section{How did we get the data?}
 
@@ -61,9 +61,9 @@ bsqft: 1834
 year: 1910
 \end{verbatim}
 
-Each weeks worth of data is available at a url of the form \url{http://www.sfgate.com/c/a/year/month/day/REHS.tbl}.  This is pretty convenient, but we need to generate a list of all Sundays from the first on record, 2003-04-27 (which we found on the archive page), to the most recent, 2008-11-16.  We then generated a list of urls in the correct format and then downloaded them with command line tool {\tt wget}. We used wget because if interrupted it can easily resume where it left off: this saves a lot of time!
+Each weeks worth of data is available at a url of the form \url{http://www.sfgate.com/c/a/year/month/day/REHS.tbl}.  This is pretty convenient, and only requires generating a list of all Sundays from the first on record, 2003-04-27 (which we found on the archive page), to the most recent, 2008-11-16.  With list of dates in hand, we then generated a list of urls in the correct format and then downloaded them with the command line tool {\tt wget}. We used wget because it can easily resume where it left off if interrupted: this saves a lot of time when you're moving from place to place on a laptop.
 
-With all the data on a local computer, the next step was to convert the data into a more standard format.  We use csv (comma separated values) for most datasets: although there's no standards format that exactly describes the structure of csv files, for most statistical data sets it's not complicated and every statistical package (and Excel!) can read it in without problems.   This gives us a file like follows:
+With all the data on a local computer, the next step was to convert the data into a more standard format.  We use csv (comma separated values) for most datasets: although there's no standards document that exactly describes the structure of csv files, for most statistical data sets it's not complicated and every statistical package (and Excel!) can read it in without problems.   This gives us a file like follows:
 
 \begin{verbatim}
 county,city,zip,street,price,br,lsqft,bsqft,year,date,datesold
@@ -76,17 +76,17 @@ Alameda County,Alameda,94501,1316 Grove Street,637000,3,2700,1168,1910,2003-04-2
 7,NA
 \end{verbatim}
 
-This is a little less human readable (there's much less white space), but it's a standard format that we can easily work with.  Another minor advantage compared to the original format was reduced storage requirements: a 50\% reduction from 90 to 45 meg.  If you look at the sample data you might notice something that needs a little explanation: the {\bf NA}s.  These are what R uses to represent missing values.
+This is a little less human readable (there's much less white space), but it's a standard format that we can easily work with.  Another minor advantage compared to the original format is smaller file size: a 50\% reduction from 90 to 45 megabytes.  If you look closely at the sample data you might notice something that needs some explanation: the {\bf NA}s.  NA stands for not applicable, and is the sentinel value that R uses to represent missing values.  Missing values have special semantics which, by default, will propagate missingness throughout a summary: we always need to make a deliberate decision to drop the missing values.
 
-It takes just a few minutes to parse all 293 data files and get {\tt house-sales.csv}, a csv file with 521,726 observations and 11 variables.  However, it tooks a few hours of tweaking the parser to get all the edge cases right: we needed to convert prices to regular numbers (by out \$ and ,), parse the dates into a consistent format, and fill in missing values for fields that didn't occur in all of the tables. 
+It takes just a few minutes to parse all 293 data files and get {\tt house-sales.csv}, a csv file with 521,726 observations and 11 variables.  It took much more time to tweak the parser to get all the edge cases right: we needed to convert prices to regular numbers (by removing \$ and ,), parse the dates into a consistent format, and fill in missing values for fields that didn't occur in all of the tables.  This is common in data analysis: the time taken to compute the answer is totally overwhelmed by the time necessary to develop the correct approach.
 
-We wrote a series of R and shell scripts to perform all these tasks.  This is a lot of work but really pays off when your data is changing.  In our case, we updated just before writing up the paper so that we had the latest data off the website.  Data changes a lot more than you might thing.  Even when your data is about something that has already happened, often the data will change  as errors are discovered and fixed.
+We wrote a series of R and shell scripts to perform all these tasks. This is a lot of work but really pays off when your data changes.  In our case, we updated just before writing up the paper so that we had the latest data off the website.  Data changes a lot more than you might think.  Even when your data is about something that has already happened, often the data will change  as errors are discovered and fixed.  Every statistician has a story about a nightmare client whose data would not stay the same from week to week.
 
 \section{Geocoding} 
 
-When we first looked at this data, we thought it would be really important to geocode all the addresses.  That is, we wanted to associate a latitude and longitude with each address so that it would be easy to explore fine grained spatial effects.  In the end, we didn't end up using this extra data as much as we thought we would, but it's still an interesting challenge: how can you geocode approximately 400,000 addresses?  
+When we first looked at this data, we thought it would be really important to geocode all the addresses.  That is, we wanted to associate a latitude and longitude with each address so that it would be easy to explore fine grained spatial effects.  In the end, we didn't end up using this extra data as much as we thought we would, but it's still an interesting challenge: how can you geocode nearly half a million addresses?  
 
-We started by looking at the well known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on number of requests and heavy restrictions on what we could do with the data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a much more open service, the  USC WebGIS Services provided by the GIS research laboratory at the University of Southern California, \url{https://webgis.usc.edu/}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode about 80,000 addresses per day, so it took us around 5 days to do all 400,000.  
+We started by looking at the well-known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on number of requests and heavy licensing restrictions on what we could do with the data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a fantastic open service, the USC WebGIS Services, provided by the GIS research laboratory at the University of Southern California, \url{https://webgis.usc.edu/}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode about 80,000 addresses per day, so it took us around 5 days to do all 400,000.  The disadvantage of this free service is that the quality of the geocoding isn't quite as good (they only use publicly available address data), but the creators were very helpful and have published an excellent free introduction to the topic in \citet{goldberg:2008}.
 
 As well as latitude and longitude, the results also include an indication of how accurate the geocoding is.  10\%  percent of the addresses were located exactly based on city records for that street number (extremely accurate), another 75\% percent were located by interpolating between the numbers at each end of a city block (very accurate), 7\% to the centre of the zip code (not very accurate) and the remainder were only located to the centre of the city or not at all.  
 
@@ -98,7 +98,7 @@ As well as latitude and longitude, the results also include an indication of how
 
 \section{Data checking}
 
-It's worth spending a lot of time with this data to ensure it's accurate.  If it's not, any problems will propagate through to the rest of our analysis.  We discovered quite a few unusual locations!  However, we will omit most of the work we did because it's more interesting to talk about the findings.  Regardless, we never want to completely throw out bad matches, because we need varying levels of accuracy for different purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.  Instead of removing the record, we use R's missing values to indicate that we don't really know the precise location of that address.  This ensures that any location with a suspicious geocoding will automatically be dropped from any analysis that uses latitude and longitude.
+It's worth spending a lot of time with this data to ensure it's accurate.  If it's not, any problems will propagate through to the rest of our analysis.  We discovered quite a few unusual locations!  However, we will omit most of the work we did because it's more interesting to talk about the findings.  Regardless, we never want to completely throw out bad matches, because we need varying levels of accuracy for different purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.  Instead of removing the record, we use R's missing values to indicate that we don't really know the precise location of that address.  This ensures that any location with a suspicious geocoding will automatically be dropped from any analysis that uses latitude and longitude, but included in all others.
 
 \section{Analysis}
 
@@ -125,7 +125,7 @@ To adjust for inflation, we extract the data for the period data we have housing
 % In this case, we want to control for changes in relative buying power (i.e.\ inflation).  Even over this relatively short time span it's a bad idea to ignore inflation: \$1\,000 2004 dollars would be worth\$1\,170 today.
 % 
 
-To show the effect of inflation, we index the CPI time series to the first date in the data.  This means we divide all of the values by the first value, converting the values into proportions, which makes it easy to read the effect of inflation from the graph.  A value of 1.1 represent a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout this chapter.  Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affect of adjusting prices for inflation.  Failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  All prices in the remainder of this paper will be inflation adjusted.
+To show the effect of inflation, we index the CPI time series to the first date in the data.  This means we divide all of the values by the first value, converting the values into proportions, which makes it easy to read the effect of inflation from the graph.  A value of 1.1 represent a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout this chapter.  Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affect of adjusting prices for inflation.  Failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  However, inflation adjustment is complicated because housing prices form a major part of the CPI, because of this we chose not to inflation adjust the prices in the paper.
 
 \begin{figure}[htbp]
   \centering
@@ -236,6 +236,8 @@ After a few false starts we released that there were two main features that seem
 Need to reorder clusters and label.
 
 Should display same clustering for original data.
+
+Display map.
 
 \section{Watching city growth}
 
