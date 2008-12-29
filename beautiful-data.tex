@@ -27,7 +27,7 @@
 \bibliographystyle{plainnat}
 
 \title{Bay area blues: the effect of the housing crisis}
-\author{Deborah F. Swayne and Hadley Wickham}
+\author{Hadley Wickham, David Poole and Deborah F. Swayne}
 \date{\today}
 
 \raggedbottom
@@ -125,7 +125,7 @@ To adjust for inflation, we extract the data for the period data we have housing
 % In this case, we want to control for changes in relative buying power (i.e.\ inflation).  Even over this relatively short time span it's a bad idea to ignore inflation: \$1\,000 2004 dollars would be worth\$1\,170 today.
 % 
 
-To show the effect of inflation, we index the CPI time series to the first date in the data.  This means we divide all of the values by the first value, converting the values into proportions, which makes it easy to read the effect of inflation from the graph.  A value of 1.1 represent a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout this chapter.  Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affect of adjusting prices for inflation.  Failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  However, inflation adjustment is complicated because housing prices form a major part of the CPI, because of this we chose not to inflation adjust the prices in the paper.
+To show the effect of inflation, we index the CPI time series to the first date in the data.  This means we divide all of the values by the first value, converting the values into proportions.  This makes it easy to read the effect of inflation from the graph: a value of 1.1 represents a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout this analysis.  Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affect of adjusting prices for inflation.  Inflation has been steadily climbing over the last five years, and failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  However, inflation adjustment is complicated because housing prices form a major part of the CPI, and because of this we chose not to inflation adjust the prices.
 
 \begin{figure}[htbp]
   \centering
@@ -140,11 +140,11 @@ With this basic overview in hand, it's time to start drilling into the details. 
 \subsection{The rich get richer and the poor get poorer}
 % explore-deciles.r
 
-Has the housing crisis equally affected the rich (those who can afford the most expensive houses) and the poor (those can only afford the cheapest houses)?  Has the effect of the crisis been to improve or worsen the relative equality of these two groups?  In this section, we will explore how the crisis has effect the prices broken down by price.  Of course the big caveat here is that we're looking at the Bay Area, so homes will be more expensive than many other places in the country, but we still might expect to see some relatively inequalities.
+Has the housing crisis equally affected the rich and the poor?  Has the effect of the crisis been to improve or worsen the relative equality of these two groups?  In this section, we will explore how the crisis has effected the prices broken down by decile.  A big caveat is that we're looking at the Bay Area, so homes will be more expensive than many other places in the country, but we still might expect to see some relative inequalities.
 
-To start our exploration, we calculate deciles of price for each month.  The deciles are the nine numbers that 10\%, 20\%, 30\%, 40\%, 50\%, 60\%, 70\%, 80\%, and 90\% of all houses are less than.  This is a succinct summary of the {\it distribution} of the prices for each month: instead of just looking at the average price, we are looking at nine numbers that summarise the complete distribution of the prices.
+To start our exploration, we calculate price deciles for each month.  The deciles are the nine prices that 10\%, 20\%, 30\%, 40\%, 50\%, 60\%, 70\%, 80\%, and 90\% of houses are cheaper than.  This is a succinct summary of the {\it distribution} of the prices for each month: instead of just looking at the average price, we are looking at nine numbers that summarise the complete distribution of the prices. 
 
-Figure~\ref{fig:decile-raw} shows how these deciles have changed over time.  The top line is the ninth decile, the price that 90\% of houses are less than, and the bottom line is the first decile, the price that only 10\% of houses are cheaper than.  The line in the middle is the median, the price which half the houses are cheaper than and half are more expensive than.  Each line follows a similar pattern, and we can see the effect of the housing bubble in mid 2007, particularly in the most expensive houses.  
+Figure~\ref{fig:decile-raw} shows how these deciles have changed over time.  The top line is the ninth decile, the price that 90\% of houses are less than, and the bottom line is the first decile, the price that only 10\% of houses are cheaper than.  The line in the middle is the median, the price which divides the houses into halves, half cheaper and half more expensive.  The lines are coloured from dark to light from expensive to cheap.  Each line follows a similar pattern, and we can see the effect of the housing bubble in mid 2007, particularly in the most expensive houses.  
 
 \begin{figure}[htbp]
   \centering
@@ -153,16 +153,16 @@ Figure~\ref{fig:decile-raw} shows how these deciles have changed over time.  The
   \label{fig:decile-raw}
 \end{figure}
 
-This plot lets us compare the absolute values of each decile, but maybe it is more appropriate to look at the relative prices.  One way to look at the relative price is to compare how each decile has changed from its starting value.  To do this we calculate an index for each decile, just as we did for the {\sc cpi}. Figure~\ref{fig:decile-ind} shows these indices.  Each decile starts at one, and we can see the relative change in prices over time.  What's interesting in this plot is that the cheaper houses (the lighter coloured lines) seem to peak higher and earlier (mid 2005) than the most expensive houses, and then drop more rapidly.  The cheapest houses lost 43\% of their 2003 value compared to only 9\% for the most expensive houses.
+This plot lets us compare the absolute values of each decile, but maybe it is more appropriate to look at the relative prices: how have the prices changed proportionately.  One way to think about the relative price is to compare how each decile has changed from its starting value.  To do this we index each decile, just as we did for the {\sc cpi}. Figure~\ref{fig:decile-ind} shows these indices.  Each decile starts at one, and we can see the relative change in prices over time.  What's interesting in this plot is that the cheaper houses (the lighter coloured lines) seem to peak higher and earlier (mid 2005) than the most expensive houses, and then drop more rapidly.  The cheapest houses lost 43\% of their 2003 value compared to only 9\% for the most expensive houses.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-ind}
-  \caption{Indexed house price within each decile.  The average price of cheaper houses increased more rapidly, and fell to much lower lows.}
+  \caption{Indexed house price within each decile.  The average price of cheaper houses increased peaks earlier and higher, and fell more steeply.}
   \label{fig:decile-ind}
 \end{figure}
 
-Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we have divide all the prices by the price of an average (median) home.  Since the housing crisis, expensive houses have been getting relatively more expensive and cheap houses relatively cheaper.  One effect of the housing crisis has been to increase the difference between the cheapest and most expensive houses.
+Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we have divided all the prices by the price of an average (median) home.  The values now represent a proportion of the median house price: a price of 1.2 represents a price 20\% higher than the median, and 0.8 20\% lower. Since the housing crisis, expensive houses have been getting relatively more expensive and cheap houses relatively cheaper.  One effect of the housing crisis has been to increase the difference between the cheapest and most expensive houses.
 
 \begin{figure}[htbp]
   \centering
@@ -243,7 +243,17 @@ Display map.
 
 We can also use this data for an unexpected purpose.  Because the data is so dense and includes the year that the house was built, we can explore historical patterns of housing development.  This idea was inspired by truliaHindsight, \url{http://hindsight.trulia.com/}, but because we have the data in an unencumbered form we are much freer to experiment with the visualisation of this data.  They have much more data, 150,000 vs 27,000, but we can display more (they display at most 2000 points at once), and we can do more sophisticated analyses.
 
-We'll overlay the data on a map of San Francisco from openstreetmap.
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=0.5\linewidth]{sf-map}%
+    \includegraphics[width=0.5\linewidth]{sf-geo}
+    \includegraphics[width=0.5\linewidth]{sf-bin-n}%
+    \includegraphics[width=0.5\linewidth]{sf-bin-price}
+    \includegraphics[width=0.5\linewidth]{sf-bin-built}%
+    \includegraphics[width=0.5\linewidth]{sf-bin-iqr}
+  \caption{caption}
+  \label{fig:label}
+\end{figure}
 
 Histogram of year built.
 
