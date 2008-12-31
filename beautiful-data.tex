@@ -174,70 +174,87 @@ Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we 
 \subsection{Geographic differences}
 % explore-city.r
 
-Big city level break down: chose all cities with more than 2910 sales in total, an average of 10 sales per week.  Gives us 59 cities in California with a total of 423,527 (out of an original 521,726, 81\% of the original data).  
+We've just seen how the housing crisis has affected expense and cheap houses differently, but how does has it affected different cities?  In this section we'll explore how the effect of the housing crisis has varied over different cities in the bay area.  To do this, we'll need to first pick out all the cities that have a decent amount of data.  We decided to focus on all all cities with more than 2910 sales in total, an average of 10 sales per week.  This gives us 58 cities (of an original 245) with a total of 428,415 sales (out of an original 521,726, 82\%).  
 
-% Figure~\ref{fig:big-cities} shows the counts for the 20 biggest cities.
-% 
-% \begin{figure}[htbp]
-%   \centering
-%   \includegraphics[width=0.5\linewidth]{big-cities}
-%   \caption{Total housing sales for the 20 biggest cities.}
-%   \label{fig:big-cities}
-% \end{figure}
-
-From this reduced data we then calculated the number of sales and the average sale price for each city for each week.  Figure~\ref{fig:spaghetti} shows this data, with each city as a different line.  Statisticians have an evocative name for this type of plot: the spaghetti plot.  It's very hard to see anything in the big jumble of lines.  We're going to use two techniques to bring some order to the mess.  First, we're going to smooth the lines to focus on the overall trend, removing short-term variation that we're not so interested in.  Next, we'll attempt to cluster the cities in groups that show similar patterns.
+From this data we then calculated the average house price for each city for each week.  Figure~\ref{fig:spaghetti} shows this data, with each city as a different line.  Statisticians have an evocative name for this type of plot: the spaghetti plot.  It's very hard to see anything in the big jumble of lines.  One way to improve this is to smooth each line, to to focus on the overall trend, removing short-term variation that we're not so interested in. 
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics[width=\linewidth]{cities-price}
-  \caption{Average sale price for each week for each city.  This type of plot is often called a spaghetti plot for obvious reasons}
+    \includegraphics[width=0.9\linewidth]{cities-price}
+  \caption{Average sale price for each week for each city.  This type of plot is often called a spaghetti plot.}
   \label{fig:spaghetti}
 \end{figure}
 
-Generalised additive models ({\sc gam}) are a generalisation of linear models \citep{wood:2006}.  A linear model has the basic form $y = a + b * x$, and {\sc gam}s generalise this to $y = f(x)$ where x is a smooth line.  A linear model is special case of a {\sc gam} because lines are very smooth functions!  Thin plate regression splines.  We define wiggliness by the second derivative and then penalise it: the final result is a compromise between fit and wiggliness.
+There are many different ways to create smooth curves, and our purposes of them most of them are fine.  We used generalised additive models ({\sc gam}) are a generalisation of linear models \citep{wood:2006}, which by finding the optimum trade-off between fitting the data and minimising the wiggliness of the line.  The effect is to remove noisy short-term effects and focus on the long-term trend.  This is what we want: we're not interested in daily or weekly changes, we're interested in the long-term changes related to the housing crisis.
 
-But don't worry if you don't understand the details: the gist is that {\sc gam}s are a useful way of removing noisy short-term effects and focussing on the general smooth trend.  This is what we want: for this investigation, we're not interested in changes from week to week or day to day, we're interested in exploring the long term changes related to the housing crisis.
-
-Displaying the smooth curves is an improvement, as in Figure~\ref{fig:smoothed}.  Note the big difference in scales: smoothing the data has removed the very large spikes which represent the sales of very expensive houses.  But there are still a lot of the lines in that plot and we might be missing important findings.  We'll make one other change to the data, we'll index each city: this removes the overall average price of the city and put's it onto an interpretable scale: proportional change in price since the start of the data.  
-
-Instead of displaying them all together, we display each city on a separate plot, as in Figure~\ref{fig:individual}.  This takes up a lot of room, but if you have a big screen or a good printer it's very worthwhile.  We can pick out some interesting patterns: San Francisco, Berkeley and Mountain view all show less of a peak and less of a drop: are more valuable than in 2004.  Other cities show big peaks and big drops: Oakley, Vallejo, and San Pablo.
+The left part of Figure~\ref{fig:smoothed} shows the the result of this smoothing. This is a big improvement and we can now actually see some patterns! Note the big difference in scales between this plot and the first: smoothing the data has removed the large spikes which represent the sales of few very expensive houses. We'll also index each city like we indexed each decile: dividing out the starting price puts each city onto an common scale and allows us to focus on the changes.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.5 \linewidth]{cities-smooth}%
   \includegraphics[width=0.5 \linewidth]{cities-indexed}
-  \caption{Smoothed city-level weekly average sale prices.  Compared to the non-smoothed version it's easier to see the long-term trends, but it's still not particularly easy}
+  \caption{Smoothed city-level weekly average sale prices.  Compared to the non-smoothed version it's easier to see the long-term trends, but it's still not particularly easy.}
   \label{fig:smoothed}
 \end{figure}
 
+There are still a lot of the lines in that plot and we might be missing important findings, so instead of displaying all the cities in plot, we looked at each city individually, as in Figure~\ref{fig:individual}.  This takes up a lot of room, but if you have a big screen or a good printer it's really worthwhile.  We can pick out some interesting patterns: Berkeley and San Francisco show less of a peak and less of a drop, and Mountain View seems not all affected by the crisis.  Other cities, like Oakley, Vallejo, and San Pablo, show big peaks and big drops: 
+
+
+
+% Figure~\ref{fig:clustering} shows one way of clustering the cities into three groups.  Note how the groups are basically formed along the diagonal: it's the difference between the peak and the plummet that seems to be telling us the most.  Figure~\ref{fig:clustered} shows the result of the clustering, with each of the three groups displayed in its own panel.  The groups are somewhat arbitrary (we could shift the boundaries a little in either direction and have little effect)
+% 
+% \begin{figure}[htbp]
+%   \centering
+%     \includegraphics[width=0.7 \linewidth]{cities-clustering}
+%   \caption{A scatterplot of cities with height at peak on x axis, and most recent value (plummet) on y axis.  The cities have been clustered into three groups.  The closer a city is to the line in the top left corner, the less the effect of the housing crisis on average prices.}
+%   \label{fig:clustering}
+% \end{figure}
+% 
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=\linewidth]{cities-indexed-clustered}
+%   \caption{The index sale price time series for the three clustered identified in Figure~\ref{fig:clustering}.  Cluster one includes cities with low peak and no plummet, cluster two cities with high peak and big plummet, and cluster three is somewhere in between.  The thick lines represent smoothed patterns within each cluster.}
+%   \label{fig:clustered}
+% \end{figure}
+
+After a few false starts we realised that there was one main feature that seemed to distinguish the different cities: difference between prices at the peak of the boom and the depth of their most recent plummet.  Figure~\ref{fig:groups} groups the cities by the value of this new variable.  The divisions are arbitrary, but you can see how the cities in each group follow a similar pattern.  This supports our view that this single number is a good summary for the effect of the housing crisis.
+
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9 \linewidth]{cities-individual}
-  \caption{Individual plots for each city.  Axis labels have been removed to save space, but the same limits are used for each plot.}
+    \includegraphics[width=0.75\linewidth]{cities-indexed-grouped}
+  \caption{A separate plot for each 0.2 interval drop.  The patterns within each group are similar, suggesting that this one number does a good job of  }
+  \label{fig:groups}
+\end{figure}
+
+We have determined that some cities showed a different pattern to others, but why? Plotting the geographic pattern, as in Figure~\ref{fig:geo} doesn't reveal anything particularly striking except that the worst hit towns tend to be further east. This doesn't offer much in the way of explanatory power, so we looked for other variables that might help us to understand what's going on. 
+
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=0.4\linewidth]{cities-geo-changes}
+  \caption{The geographic distribution of price drops.}
+  \label{fig:geo}
+\end{figure}
+
+The census quickfacts site, e.g.\ \url{http://quickfacts.census.gov/qfd/states/06/0649670.html} provides a number of interesting demographic variables for each city.  Unfortunately the data isn't available in an easily downloadable format, so we had to resort to another set of scripts to scrape the data and convert it into csv.  There were also some differences in what constituted a city in the census data and so we could only match 46 out of the full 58 cities.  The cities that weren't matched were either too small, or included in a large city in the census data.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.33\linewidth]{cities-income}%
+  \includegraphics[width=0.33\linewidth]{cities-grads}%
+  \includegraphics[width=0.33\linewidth]{cities-commute}
+  
+  \caption{From left to right, the relationship between the drop in house prices and average income, percent of college graduates and average commute time.}
+  \label{fig:census}
+\end{figure}
+
+Figure~\ref{fig:census} shows three scatterplots illustrating interesting relationships.  The most affected cities have more babies and children, bigger households, fewer bachelors degrees, and longer commutes.  Most significantly these cities also have lower incomes, which is probably the factor that drives all of the other relationships.  The housing crisis has been relatively more damaging to the house prices of people who live in poorer areas.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{cities-individual}
+  \caption{Individual plots for each city.}
   \label{fig:individual}
 \end{figure}
-
-After a few false starts we released that there were two main features that seemed to distinguish the different cities: the height of the peak in the boom and the most recent plummet.  Figure~\ref{fig:clustering} shows one way of clustering the cities into three groups.  Note how the groups are basically formed along the diagonal: it's the difference between the peak and the plummet that seems to be telling us the most.  Figure~\ref{fig:clustered} shows the result of the clustering, with each of the three groups displayed in its own panel.  The groups are somewhat arbitrary (we could shift the boundaries a little in either direction and have little effect)
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=0.7 \linewidth]{cities-clustering}
-  \caption{A scatterplot of cities with height at peak on x axis, and most recent value (plummet) on y axis.  The cities have been clustered into three groups.  The closer a city is to the line in the top left corner, the less the effect of the housing crisis on average prices.}
-  \label{fig:clustering}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\linewidth]{cities-indexed-clustered}
-  \caption{The index sale price time series for the three clustered identified in Figure~\ref{fig:clustering}.  Cluster one includes cities with low peak and no plummet, cluster two cities with high peak and big plummet, and cluster three is somewhere in between.  The thick lines represent smoothed patterns within each cluster.}
-  \label{fig:clustered}
-\end{figure}
-
-Need to reorder clusters and label.
-
-Should display same clustering for original data.
-
-Display map.
 
 \section{Watching city growth}
 
@@ -252,7 +269,7 @@ We can also use this data for an unexpected purpose.  Because the data is so den
     \includegraphics[width=0.5\linewidth]{sf-bin-built}%
     \includegraphics[width=0.5\linewidth]{sf-bin-iqr}
   \caption{caption}
-  \label{fig:label}
+  \label{fig:sf}
 \end{figure}
 
 Histogram of year built.
