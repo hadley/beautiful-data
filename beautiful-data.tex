@@ -149,7 +149,7 @@ Figure~\ref{fig:decile-raw} shows how these deciles have changed over time.  The
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-raw}
-  \caption{Average house price within each decile.  Cheaper houses (lower deciles) are coloured lighter.} 
+  \caption{Monthly average house price within each decile.  Cheaper houses (lower deciles) are coloured lighter.} 
   \label{fig:decile-raw}
 \end{figure}
 
@@ -158,7 +158,7 @@ This plot lets us compare the absolute values of each decile, but maybe it is mo
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-ind}
-  \caption{Indexed house price within each decile.  The average price of cheaper houses increased peaks earlier and higher, and fell more steeply.}
+  \caption{Indexed house price within each decile.  The average price of cheaper houses peaked earlier and higher, and fell more steeply.}
   \label{fig:decile-ind}
 \end{figure}
 
@@ -226,7 +226,7 @@ After a few false starts we realised that there was one main feature that seemed
   \label{fig:groups}
 \end{figure}
 
-We have determined that some cities showed a different pattern to others, but why? Plotting the geographic pattern, as in Figure~\ref{fig:geo} doesn't reveal anything particularly striking except that the worst hit towns tend to be further east. This doesn't offer much in the way of explanatory power, so we looked for other variables that might help us to understand what's going on. 
+We have determined that some cities showed a different pattern to others, but why? Plotting the geographic pattern, as in Figure~\ref{fig:geo} doesn't reveal anything particularly striking except that the worst hit towns tend to be the north and the east. This doesn't offer much in the way of explanatory power, so we looked for other variables that might help us to understand what's going on. 
 
 \begin{figure}[htbp]
   \centering
@@ -235,7 +235,7 @@ We have determined that some cities showed a different pattern to others, but wh
   \label{fig:geo}
 \end{figure}
 
-The census quickfacts site, e.g.\ \url{http://quickfacts.census.gov/qfd/states/06/0649670.html} provides a number of interesting demographic variables for each city.  Unfortunately the data isn't available in an easily downloadable format, so we had to resort to another set of scripts to scrape the data and convert it into csv.  There were also some differences in what constituted a city in the census data and so we could only match 46 out of the full 58 cities.  The cities that weren't matched were either too small, or included in a large city in the census data.
+The census quickfacts site, e.g.\ \url{http://quickfacts.census.gov/qfd/states/06/0649670.html}, provides a number of interesting demographic variables for each city.  Unfortunately the data isn't available in an easily downloadable format, so we had to resort to another set of scripts to scrape the data and convert it into csv.  There were also some differences in what constituted a city in the census data and so we could only match 46 out of the full 58 cities.  The cities that weren't matched were either too small, or included in a large city in the census data.
 
 \begin{figure}[htbp]
   \centering
@@ -247,7 +247,7 @@ The census quickfacts site, e.g.\ \url{http://quickfacts.census.gov/qfd/states/0
   \label{fig:census}
 \end{figure}
 
-Figure~\ref{fig:census} shows three scatterplots illustrating interesting relationships.  The most affected cities have more babies and children, bigger households, fewer bachelors degrees, and longer commutes.  Most significantly these cities also have lower incomes, which is probably the factor that drives all of the other relationships.  The housing crisis has been relatively more damaging to the house prices of people who live in poorer areas.
+Looking at these variables revealed the following interesting relationships.  The most affected cities have a high percentage of  babies and children, bigger households, fewer bachelors degrees, and longer commutes.  Most significantly these cities also have lower incomes, which is probably the factor that drives all of the other relationships. Figure~\ref{fig:census} shows three scatterplots showing the relationship between the drop and income, percent of college graduates and commute time.  The relationship with commute time is weak, but striking in that all of the cities with particularly long commute times have particularly large drops.  It appears that the housing crisis  has been relatively more damaging to the house prices of people who live in poorer areas.
 
 \begin{figure}[htbp]
   \centering
@@ -256,25 +256,50 @@ Figure~\ref{fig:census} shows three scatterplots illustrating interesting relati
   \label{fig:individual}
 \end{figure}
 
-\section{Watching city growth}
+\section{Exploring San Francisco}
 
-We can also use this data for an unexpected purpose.  Because the data is so dense and includes the year that the house was built, we can explore historical patterns of housing development.  This idea was inspired by truliaHindsight, \url{http://hindsight.trulia.com/}, but because we have the data in an unencumbered form we are much freer to experiment with the visualisation of this data.  They have much more data, 150,000 vs 27,000, but we can display more (they display at most 2000 points at once), and we can do more sophisticated analyses.
+Having explored the difference between cities, we turned to look at a single city in more detail.  We chose San Francisco because it's the city that collectively we were most familiar with, and it has some iconic features that it should be easy for others to identify as well.  We started our exploration by extracting all addresses within San Francisco that were geocoded to block interpolation or better, giving us a total of 25,377 addresses.  We this data we did a very simple plot: a scatterplot of the latitudes and longitudes, Figure~\ref{fig:sf-geo}.  For the residential parts of SF, this gives an amazingly detailed picture.  We can see Golden Gate and San Bruno parks, but our view of downtown is patchy, because there are few residential homes there.
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics[width=0.5\linewidth]{sf-map}%
-    \includegraphics[width=0.5\linewidth]{sf-geo}
-    \includegraphics[width=0.5\linewidth]{sf-bin-n}%
-    \includegraphics[width=0.5\linewidth]{sf-bin-price}
-    \includegraphics[width=0.5\linewidth]{sf-bin-built}%
-    \includegraphics[width=0.5\linewidth]{sf-bin-iqr}
-  \caption{caption}
-  \label{fig:sf}
+  \includegraphics[height=2in]{sf-geo}%
+  \includegraphics[height=2in]{sf-map}
+  \caption{(Right) map of San Francisco from \url{http://openstreetmap.com}}
+  \label{fig:sf-geo}
 \end{figure}
 
-Histogram of year built.
+One problem with this plot is we lose all feel for how many sales are in each location.  Figure~\ref{sf-n} shows two attempts to recapture the information.  On the left, we have a bubbleplot with the size of the location proportional to the number of sales.  We now get quite a different view of the downtown: there are very large number of sales down there.  Looking closer at the data reveals that these are apartment buildings with hundreds of apartments.  On the right, we have divided SF in to squares of 0.005 latitude and longitude and counted the number of houses in each bin.  This gives us higher level view of where the houses are and will be useful for the next step, exploring how prices vary geographically within the city.
 
-You can see features like golden gate park and so on.
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=0.5\linewidth]{sf-geo-n}%
+    \includegraphics[width=0.5\linewidth]{sf-bin-n}
+    % \includegraphics[width=0.5\linewidth]{sf-bin-price}
+    % \includegraphics[width=0.5\linewidth]{sf-bin-built}%
+    % \includegraphics[width=0.5\linewidth]{sf-bin-iqr}
+  \caption{caption}
+  \label{fig:sf-n}
+\end{figure}
+
+Using that same binning, we calculate the house price deciles.  Figure~\ref{sf-price} shows the geographic distribution of two functions of the deciles.  On left we display the median house price for each bin.  We can see the most expensive houses border the Presidio and coast to the North of SF.  The number displayed on the right is a little more complicated to explain - it's the difference between the first and ninth deciles, divided by the median.  This is a measure of relative variation (a analogue to the coefficient of variation), giving the number of median house prices between the cheapest and most expensive houses.
+
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=0.5\linewidth]{sf-bin-price}%
+    \includegraphics[width=0.5\linewidth]{sf-bin-ineq}
+  \caption{caption}
+  \label{fig:sf-price}
+\end{figure}
+
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=0.9\linewidth]{sf-geo-big}
+%   \caption{}
+%   \label{fig:sf-big}
+% \end{figure}
+
+
+% We can also use this data for an unexpected purpose.  Because the data is so dense and includes the year that the house was built, we can explore historical patterns of housing development.  This idea was inspired by truliaHindsight, \url{http://hindsight.trulia.com/}, but because we have the data in an unencumbered form we are much freer to experiment with the visualisation of this data.  They have much more data, 150,000 vs 27,000, but we can display more (they display at most 2000 points at once), and we can do more sophisticated analyses.
 
 \section{Conclusions}
 
