@@ -86,7 +86,7 @@ We wrote a series of R and shell scripts to perform all these tasks. This is a l
 
 When we first looked at this data, we thought it would be really important to geocode all the addresses.  That is, we wanted to associate a latitude and longitude with each address so that it would be easy to explore fine grained spatial effects.  In the end, we didn't end up using this extra data as much as we thought we would, but it's still an interesting challenge: how can you geocode nearly half a million addresses?  
 
-We started by looking at the well-known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on number of requests and heavy licensing restrictions on what we could do with the data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a fantastic open service, the USC WebGIS Services, provided by the GIS research laboratory at the University of Southern California, \url{https://webgis.usc.edu/}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode about 80,000 addresses per day, so it took us around 5 days to do all 400,000.  The disadvantage of this free service is that the quality of the geocoding isn't quite as good (they only use publicly available address data), but the creators were very helpful and have published an excellent free introduction to the topic in \citet{goldberg:2008}.
+We started by looking at the well-known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on number of requests and heavy licensing restrictions on what we could do with the data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a fantastic open service, the USC WebGIS Services, provided by the GIS research laboratory at the University of Southern California, \citet{uscgis}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode about 80,000 addresses per day, so it took us around 5 days to do all 400,000.  The disadvantage of this free service is that the quality of the geocoding isn't quite as good (they only use publicly available address data), but the creators were very helpful and have published an excellent free introduction to the topic in \citet{goldberg:2008}.
 
 As well as latitude and longitude, the results also include an indication of how accurate the geocoding is.  10\%  percent of the addresses were located exactly based on city records for that street number (extremely accurate), another 75\% percent were located by interpolating between the numbers at each end of a city block (very accurate), 7\% to the centre of the zip code (not very accurate) and the remainder were only located to the centre of the city or not at all.  
 
@@ -258,58 +258,56 @@ Looking at these variables revealed the following interesting relationships.  Th
 
 \section{Exploring San Francisco}
 
-Having explored the difference between cities, we turned to look at a single city in more detail.  We chose San Francisco because it's the city that collectively we were most familiar with, and it has some iconic features that it should be easy for others to identify as well.  We started our exploration by extracting all addresses within San Francisco that were geocoded to block interpolation or better, giving us a total of 25,377 addresses.  We this data we did a very simple plot: a scatterplot of the latitudes and longitudes, Figure~\ref{fig:sf-geo}.  For the residential parts of SF, this gives an amazingly detailed picture.  We can see Golden Gate and San Bruno parks, but our view of downtown is patchy, because there are few residential homes there.
+Having explored the difference between cities, we turned to look at a single city in more detail.  We chose San Francisco because it's the city that collectively we were most familiar with, and it has some iconic features that it should be easy for others to identify as well.  We started our exploration by extracting all addresses within San Francisco that were geocoded to block interpolation or better, giving us a total of 25,377 addresses.  With this data we did a very simple plot: a scatterplot of the latitudes and longitudes, Figure~\ref{fig:sf-geo}.  For the residential parts of SF, this gives an amazingly detailed picture.  We can see Golden Gate and San Bruno parks, but our view of downtown is patchy, because there are few residential homes there.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[height=2in]{sf-geo}%
   \includegraphics[height=2in]{sf-map}
-  \caption{(Right) map of San Francisco from \url{http://openstreetmap.com}}
+  \caption{(Left) A small point is drawn for every house sale in the data.  It gives us a pretty feel for the layout of San Franciscio. (Right) For comparison, a street map of San Francisco from \url{http://openstreetmap.com}}
   \label{fig:sf-geo}
 \end{figure}
 
-One problem with this plot is we lose all feel for how many sales are in each location.  Figure~\ref{sf-n} shows two attempts to recapture the information.  On the left, we have a bubbleplot with the size of the location proportional to the number of sales.  We now get quite a different view of the downtown: there are very large number of sales down there.  Looking closer at the data reveals that these are apartment buildings with hundreds of apartments.  On the right, we have divided SF in to squares of 0.005 latitude and longitude and counted the number of houses in each bin.  This gives us higher level view of where the houses are and will be useful for the next step, exploring how prices vary geographically within the city.
+One problem with this plot is we lose all feel for how many sales are in each location.  Figure~\ref{fig:sf-n} shows two attempts to recapture the information.  On the left, we have a bubbleplot with the size of the location proportional to the number of sales.  We now get quite a different view of the downtown: there are very large number of sales down there.  Looking closer at the data reveals that these are apartment buildings with hundreds of apartments.  On the right, we have divided SF in to squares of 0.005 latitude and longitude and counted the number of houses in each bin.  This gives us higher level view of where the houses are and will be useful for the next step, exploring how prices vary geographically within the city.
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5\linewidth]{sf-geo-n}%
     \includegraphics[width=0.5\linewidth]{sf-bin-n}
-    % \includegraphics[width=0.5\linewidth]{sf-bin-price}
-    % \includegraphics[width=0.5\linewidth]{sf-bin-built}%
-    % \includegraphics[width=0.5\linewidth]{sf-bin-iqr}
-  \caption{caption}
+  \caption{The geographic distribution of numbers of house sales.  (Left) this plot is similar to the previous plot, but the size of the dot is now proportional to the number of sales at each unique location.  This changes the picture significantly, as the large apartment complexes in the city now pop out.  (Right) A display of housing sales at a higher level of aggregation: latitude and longitude are divided into a small number of bins and the number of sales in each bin is counted and displayed as the colour of the bin.}
   \label{fig:sf-n}
 \end{figure}
 
-Using that same binning, we calculate the house price deciles.  Figure~\ref{sf-price} shows the geographic distribution of two functions of the deciles.  On left we display the median house price for each bin.  We can see the most expensive houses border the Presidio and coast to the North of SF.  The number displayed on the right is a little more complicated to explain - it's the difference between the first and ninth deciles, divided by the median.  This is a measure of relative variation (a analogue to the coefficient of variation), giving the number of median house prices between the cheapest and most expensive houses.
+Using that same binning, we calculate the mean and coefficient of variation of the house prices.  The coefficient of variation is the standard deviation divided by the mean.  We use it here because a variation of \$100,000 is relatively much more important when houses are cheap compared to when they are expensive.  Figure~\ref{fig:sf-price} shows the geographic distribution of these two summary statistics.   We can see the most expensive houses border the Presidio and coast to the North of SF.  There also seems to be a peak in the south West - this is the affluent St Francis wood area, near San Francisco State University.  There is an interesting geographic trend in the coefficient of variation - it seems to increase towards the Northwest.  We don't know enough about San Francisco to hypothesise to why this occurs.
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5\linewidth]{sf-bin-price}%
-    \includegraphics[width=0.5\linewidth]{sf-bin-ineq}
-  \caption{caption}
+    \includegraphics[width=0.5\linewidth]{sf-bin-cv}
+  \caption{Geographic distribution of house prices.  Using the same binning as above, the mean (left) and coefficient of variation (right) are computed and displayed using colour.  }
   \label{fig:sf-price}
 \end{figure}
-
-% \begin{figure}[htbp]
-%   \centering
-%   \includegraphics[width=0.9\linewidth]{sf-geo-big}
-%   \caption{}
-%   \label{fig:sf-big}
-% \end{figure}
-
 
 % We can also use this data for an unexpected purpose.  Because the data is so dense and includes the year that the house was built, we can explore historical patterns of housing development.  This idea was inspired by truliaHindsight, \url{http://hindsight.trulia.com/}, but because we have the data in an unencumbered form we are much freer to experiment with the visualisation of this data.  They have much more data, 150,000 vs 27,000, but we can display more (they display at most 2000 points at once), and we can do more sophisticated analyses.
 
 \section{Conclusions}
 
-All the tools we use are open source: you can download them and replicate our work yourselves.  The principle of reproducible research (cite Gentleman and Temple Lang) paper is very important for science - we provide enough detail that you can follow out work every step of the way, and you can run a script to reproduce exactly what we did.  A little tricky because working on this data analysis also lead us to develop some new tools, and it takes some time for these to trickle into released versions.  If you have problems running the code we released, please let us know!  Data analysis like software development.  Local caches to speed things up and to provide some backup if the original sources go down.
+We have used relatively simple statistical tools like indexing, quantiles, smoothing and binning to explore a large complex data set.  We start with broad summaries and then dig down to explore the details.  All the tools we used are open source: you can download them and replicate our work yourselves. This principle of reproducibility \citep{gentleman:2007} is very important for science - we provide enough detail that you can follow our work every step of the way, and you can run a script to reproduce exactly what we did.  If we made a mistake, you can easily discover it, fix it and observe the effects on our conclusions.  
 
-Tension with interactive tools: they are great for discovery, but bad for reproducibility.  Once you have discovered something in your interactive tool, you need to be able to reproduce it independently so that others can see it too.  Area of active research (cite Heer's work).  Also need to note your findings as you go along - no way to do this purely in code.  If you read the code on the website you'll see we've used comments to note down what we see and the analysis follows a fairly logical flow.  This is different to what happens in practice - there are many blind alleys that didn't make the final cut.  We rely on the rcs system to keep these, although currently lacking tools to easily search past versions and see the wrong paths that we went down.
+Making a data analysis reproducible can be a lot of extra work, but once the principles are ingrained in your workflow, it doesn't take that much time.  Importantly, it is not only useful for others, but also to future-you.  If you haven't made your analysis reproducible and you come back to it 6 months or a year later (quite common if you are submitting the results to an academic journal), you may look at the code and wonder what on earth you were thinking.  If you have made the analysis reproducible and included plenty of comments about your thinking, then you save a lot of time trying to reproduce your previous work and state of mind.
 
-Tools: shell (wget, awk); R (ggplot2, plyr, reshape).
+Another tool that we find useful is source code control.  In an analogous way to software development, this makes it easy to throw away parts of the analysis that don't work or have been superseded.  If you read the code on the website you'll see that (by and large) the analysis follows a fairly logical flow.  This is not how it starts off!  Data analysis is a fairly creative process, with many blind alleys that don't lead anywhere, mistakes and alternative approaches.  Leaving all of these in makes it hard to follow exactly what we did, but removing them completely makes it hard to see all the things that we tried.  Using a code versioning system leaves us with a happy medium where the false paths are not immediately visible, but can be looked up (although current tools are somewhat lacking for this purpose).
 
-Note about graphics: can churn out rough versions for exploration very quickly - takes more time to polish them for publication.  Clarify story, remove extraneous elements and ensure that it supports the text.
+We love working with data, exploring it and learning what is going on.  We hope we have shared with you our enthusiasm for and excitement about data analysis, and have shown you some of the tools and techniques that we find most useful.  
+
+% Tools: shell (wget, awk,); perl; R (ggplot2, plyr, reshape).
+
+% Note about graphics: can churn out rough versions for exploration very quickly - takes more time to polish them for publication.  Clarify story, remove extraneous elements and ensure that it supports the text.
+
+% A little tricky because working on this data analysis also lead us to develop some new tools, and it takes some time for these to trickle into released versions.  If you have problems running the code we released, please let us know!  Data analysis like software development.  Local caches to speed things up and to provide some backup if the original sources go down.
+
+% Tension with interactive tools: they are great for discovery, but bad for reproducibility.  Once you have discovered something in your interactive tool, you need to be able to reproduce it independently so that others can see it too.  Area of active research (cite Heer's work).  
+
 
 
 % bibtool -x beautiful-data.aux > references.bib
