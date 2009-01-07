@@ -37,15 +37,15 @@
 
 \section{Introduction}
 
-There has been much talk of the housing crisis in the media, and much speculation who has been worst hit and how long it might last.  In this chapter we're going to take a more quantitative look at the housing crisis by exploring data about the sales half a million homes in the Bay Area.  We are going to use a few simple statistical tools, but mostly we will focus on graphical displays of the data.  (You might wonder why we chose to explore the Bay Area given that none of us live there, but it revolves around the availability of the data.)
+There has been much talk of the housing crisis in the media, and much speculation who has been worst hit and how long it might last.  In this chapter we're going to take a more quantitative look at the housing crisis by exploring data about the sales of half a million homes in the Bay Area.   We are going to use a few simple statistical tools, but mostly we will focus on graphical displays of the data.  
 
-This is a large data and we have only just scratched the surface.  If the data has caught your interest and you'd like to follow our work in more detail and try out some your own ideas, we have made all data and code available in a git repository at \url{https://github.com/hadley/sfhousing}. Both code and data are licensed with the permissive MIT license.  We'll illustrate snippets of code and fragments of the data inline, but each section of this chapter will also point you to a matching file online.  The files don't cover the exactly content as each section: you can see some of the dead ends we tried, and some of the plots that weren't quite good enough to make it into the plot.  
+% (Given that none of us live there, you might wonder why we chose to explore the Bay Area, but it revolves around the availability of the data.)
 
-We're going use R, a statistical programming and data analysis environment, for most of the analysis.  We'll discuss R and a few other we used in more depth later on, but for now lets dive into the data.
+To perform our investigation, we will mainly use R, a statistical programming and data analysis environment.  We'll discuss R and a few other we used in more depth later on, but for now lets dive into the data.  We'll start by discussing how we got the data, the cleaning and transformation we performed before we could start any analysis, and then we'll show some of the interesting things that we uncovered.
 
 \section{How did we get the data?}
 
-Finding relevant datasets for a particular problem is challenging and requires a lot of exploration and investigation.  We were particularly luckily to stumble over the the weekly housing sales update for the Bay Area produced by the SF Chronicle, \url{http://www.sfgate.com/homesales/}.  Initially we had planned on scraping the data off the website, but a little detective work revealed that the data is already available in a machine readable form.  Each human readable weekly summary points to a machine readable text file that looks like this: 
+Finding relevant datasets for a particular problem is challenging and requires a lot of exploration and investigation.  We were particularly luckily to stumble over weekly house sales updates for the Bay Area produced by the SF Chronicle, \url{http://www.sfgate.com/homesales/}.  Initially we had planned on scraping the data off the website, but a little detective work revealed that the data is already available in a machine readable format.  Each human readable (html web page) weekly summary is built from a machine readable text file that looks like this: 
 
 \begin{verbatim}
 rowid: 1
@@ -61,9 +61,9 @@ bsqft: 1834
 year: 1910
 \end{verbatim}
 
-Each weeks worth of data is available at a url of the form \url{http://www.sfgate.com/c/a/year/month/day/REHS.tbl}.  This is pretty convenient, and only requires generating a list of all Sundays from the first on record, 2003-04-27 (which we found on the archive page), to the most recent, 2008-11-16.  With list of dates in hand, we then generated a list of urls in the correct format and then downloaded them with the command line tool {\tt wget}. We used wget because it can easily resume where it left off if interrupted: this saves a lot of time when you're moving from place to place on a laptop.
+Each week's worth of data is available at a url of the form \url{http://www.sfgate.com/c/a/year/month/day/REHS.tbl}.  This is pretty convenient, and only requires generating a list of all Sundays from the first on record, 2003/04/27 (which we found on the archive page), to the most recent, 2008/11/16 (at the time of analysis).  With list of dates in hand, we then generated a list of urls in the correct format and then downloaded them with the command line tool {\tt wget}. We used wget because it can easily resume where it left off if interrupted: this saves a lot of time when you're moving from place to place on a laptop.
 
-With all the data on a local computer, the next step was to convert the data into a more standard format.  We use csv (comma separated values) for most datasets: although there's no standards document that exactly describes the structure of csv files, for most statistical data sets it's not complicated and every statistical package (and Excel!) can read it in without problems.   This gives us a file like follows:
+With all the data on a local computer, the next step was to convert the data into a standard format.  We use csv (comma separated values) for most datasets: although there's no standards document that exactly describes the structure of csv files, for most statistical datasets it's not complicated and every statistical package (and Excel!) can read it in without problems.   This gives us a file like this:
 
 \begin{verbatim}
 county,city,zip,street,price,br,lsqft,bsqft,year,date,datesold
@@ -76,19 +76,17 @@ Alameda County,Alameda,94501,1316 Grove Street,637000,3,2700,1168,1910,2003-04-2
 7,NA
 \end{verbatim}
 
-This is a little less human readable (there's much less white space), but it's a standard format that we can easily work with.  Another minor advantage compared to the original format is smaller file size: a 50\% reduction from 90 to 45 megabytes.  If you look closely at the sample data you might notice something that needs some explanation: the {\bf NA}s.  NA stands for not applicable, and is the sentinel value that R uses to represent missing values.  Missing values have special semantics which, by default, will propagate missingness throughout a summary: we always need to make a deliberate decision to drop the missing values.
+This is a little less human readable (there's much less white space), but it's a standard format that we can easily work with.  Another minor advantage is that's much smaller than the original:  45 vs 90 megabytes.  If you look closely at the sample data you might notice something that needs some explanation: the {\bf NA}s.  NA stands for not applicable, and is the sentinel value that R uses to represent missing values.  Missing values have special semantics which, by default, will propagate missingness throughout a summary:  + NA = NA, 5 < NA = NA and so on. We always need to make a deliberate decision to drop the missing values from an analysis.
 
-It takes just a few minutes to parse all 293 data files and get {\tt house-sales.csv}, a csv file with 521,726 observations and 11 variables.  It took much more time to tweak the parser to get all the edge cases right: we needed to convert prices to regular numbers (by removing \$ and ,), parse the dates into a consistent format, and fill in missing values for fields that didn't occur in all of the tables.  This is common in data analysis: the time taken to compute the answer is totally overwhelmed by the time necessary to develop the correct approach.
-
-We wrote a series of R and shell scripts to perform all these tasks. This is a lot of work but really pays off when your data changes.  In our case, we updated just before writing up the paper so that we had the latest data off the website.  Data changes a lot more than you might think.  Even when your data is about something that has already happened, often the data will change  as errors are discovered and fixed.  Every statistician has a story about a nightmare client whose data would not stay the same from week to week.
+It takes just a few minutes to parse the files for all 293 weeks and get {\tt house-sales.csv}, a csv file with 521,726 observations and 11 variables.  It took much more time to tweak the parser to get all the edge cases right: we needed to convert prices to regular numbers (by removing \$ and ,), parse the dates into a consistent format, and fill in missing values for fields that didn't occur in all of the tables.  This is common in data analysis: the time taken to compute the answer is totally overwhelmed by the time necessary to develop the correct approach.
 
 \section{Geocoding} 
 
-When we first looked at this data, we thought it would be really important to geocode all the addresses.  That is, we wanted to associate a latitude and longitude with each address so that it would be easy to explore fine grained spatial effects.  In the end, we didn't end up using this extra data as much as we thought we would, but it's still an interesting challenge: how can you geocode nearly half a million addresses?  
+When we first looked at this data, we thought it would be really important to geocode all 436,107 unique addresses.  That is, we wanted to associate a latitude and longitude with each address so that it would be easy to explore fine-grained spatial effects.  In the end, we didn't end up using this extra data as much as we thought we would, but it's still an interesting challenge: how can you geocode nearly half a million addresses?  
 
-We started by looking at the well-known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on number of requests and heavy licensing restrictions on what we could do with the data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a fantastic open service, the USC WebGIS Services, provided by the GIS research laboratory at the University of Southern California, \citet{uscgis}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode about 80,000 addresses per day, so it took us around 5 days to do all 400,000.  The disadvantage of this free service is that the quality of the geocoding isn't quite as good (they only use publicly available address data), but the creators were very helpful and have published an excellent free introduction to the topic in \citet{goldberg:2008}.  (We suspect that the software included a bug during the period we used it, so that large numbers of addresses were falsely assigned to the Los Angeles area and elsewhere around the state, and we remapped these addresses using another free on-line service at gpsvisualizer.com.)
+We started by looking at the well-known web services provided by google and yahoo.  These were no good for two reasons: strict daily limits on the number of requests and heavy licensing restrictions on the resulting data.  The daily limits meant that it would take well over a month to geocode all the addresses, and then the licensing would mean that we couldn't publish our results!  After a lot of googling, we found a fantastic open service, the USC WebGIS Services, provided by the GIS research laboratory at the University of Southern California \citep{uscgis}.  This service is free for non-commercial use and makes no restrictions on the uses to which you can put the data.  It has no daily usage cap, but there is an implicit cap caused by the speed: we could only geocode about 80,000 addresses per day, so it took us around 5 days to do all 400,000.  The disadvantage of this free service is that the quality of the geocoding isn't quite as good (they only use publicly available address data), but the creators were very helpful and have published an excellent free introduction to the topic in \citet{goldberg:2008}.  (We suspect that the software included a bug during the period we used it, so that large numbers of addresses were falsely assigned to the Los Angeles area and elsewhere around the state, and we remapped these addresses using another free on-line service at gpsvisualizer.com.)
 
-As well as latitude and longitude, the USC results also include an indication of how accurate the geocoding is.  10\%  percent of the addresses were located exactly based on city records for that street number (extremely accurate), another 75\% percent were located by interpolating between the numbers at each end of a city block (very accurate), 7\% to the centre of the zip code (not very accurate) and the remainder were only located to the centre of the city or not at all.  
+As well as latitude and longitude, the USC results also include an indication of how accurate the geocoding is.  10\%  percent of the addresses were located exactly based on property boundaries (extremely accurate), another 75\% percent were located by interpolating between the numbers at each end of the block (very accurate), 7\% to the centre of the zip code (not very accurate) and the remainder were only located to the centre of the city or not at all.  
 
 %       QUALITY_ADDRESS_RANGE_INTERPOLATION 75.30\%
 %             QUALITY_EXACT_PARCEL_CENTROID  9.85\%
@@ -96,17 +94,17 @@ As well as latitude and longitude, the USC results also include an indication of
 %       QUALITY_COUNTY_SUBDIVISION_CENTROID  0.12\%
 %         QUALITY_UNIFORM_LOT_INTERPOLATION  0.04\%
 
-Errors in geocoding come from a number of sources:  There are typographical errors in the addresses, and new buildings are often not in public databases.  The addresses in San Jose were a particular challenge.  Sales are listed for several ``towns'' that are not acknowledged in any mapping sites we could find, so we assume they are informal names for neighborhoods: North, South, East and West San Jose, Berryessa, Cambrian, and a few others.  Our debugging process included drawing simple maps by county and town to identify the addresses that had been located far afield.
-
 \section{Data checking}
 
-It's worth spending a lot of time with this data to ensure it's accurate.  If it's not, any problems will propagate through to the rest of our analysis.  We discovered quite a few unusual locations!  However, we will omit most of the work we did because it's more interesting to talk about the findings.  Regardless, we never want to completely throw out bad matches, because we need varying levels of accuracy for different purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.  Instead of removing the record, we use R's missing values to indicate that we don't really know the precise location of that address.  This ensures that any location with a suspicious geocoding will automatically be dropped from any analysis that uses latitude and longitude, but included in all others.
+It's worth spending a lot of time with this data to ensure it's accurate.  If it's not, any problems will propagate through to the rest of our analysis.  We discovered quite a few unusual locations!  Errors in geocoding come from a number of sources:  There are typographical errors in the addresses, and new buildings are often not in public databases.  The addresses in San Jose were a particular challenge.  Sales are listed for several ``towns'' that are not acknowledged in any mapping sites we could find, so we assume they are informal names for neighbourhoods: North, South, East and West San Jose, Berryessa, Cambrian, and a few others.  Our debugging process included drawing simple maps by county and town to identify the addresses that had been located far afield.
+
+Where possible we tried to correct any errors.  When that wasn't possible, we used R's missing values to indicate that we don't really the latitude and longitude.  This is a better approach than throwing out bad matches, because we need varying levels of accuracy for different  purposes: city level accuracy is fine when we are comparing cities, will want address level when we are looking within a city, or focusing on purely geographical comparisons.  Using missing values for lat and long ensures that any location with a suspicious geocoding will be dropped from analyses that uses latitude and longitude, but included in all others.
 
 \section{Analysis}
 
-When starting an analysis, it's best to start with a very broad overview.  Given that we're interested in the housing crisis, we'll start by looking at weekly sales and average price.  Once we have a feel for the overall patterns, we'll start breaking the data up into smaller pieces and seeing how they compare to each other and to the overall patterns.  We are going to look at two such breakdowns, by house price (from most expensive to least), and my spatial location (within the biggest cities in the bay area).
+When starting an analysis, it's best to start with a very broad overview.  Given that we're interested in the housing crisis, we'll start by looking at the weekly number of sales and average price.  Once we have a feel for the overall patterns, we'll start breaking the data up into smaller pieces and seeing how they compare to each other and to the overall patterns.  We will look at three breakdowns, by house price (from most expensive to least), and spatially, both between cities and within a single city (San Francisco).
 
-Figure~\ref{fig:daily} shows weekly sale numbers and average prices for the 293 weeks of the data.  There are a lot of interesting patterns in this data.  The effect of the housing crisis on average prices is striking, with an increasing trend until June 2007 and then a sharp drop.  Sales show a different pattern.  From mid 2006, we see a gradual decrease in sales volume, and then an increasing trend in early 2008.  Maybe by this point house prices had dropped enough that people were shopping for bargains again.
+Figure~\ref{fig:daily} shows weekly sale numbers and average prices for the 293 weeks of the data.  There are a lot of interesting patterns in this data.  The effect of the housing crisis on average prices is striking, with an increasing trend until June 2007 and then a sharp drop until the present day --- the housing crisis.  Sales show a different pattern.  From mid 2006, we see a gradual decrease in sales volume, and then an increasing trend in early 2008.  Maybe by this point house prices had dropped enough that people were shopping for bargains again.
 
 \begin{figure}[htbp]
   \centering
@@ -116,24 +114,17 @@ Figure~\ref{fig:daily} shows weekly sale numbers and average prices for the 293 
   \label{fig:daily}
 \end{figure}
 
-The data is over a relatively short period of time (6 years), but we might wonder if it's necessary to adjust for inflation, to ensure that the prices paid in 2003 are comparable to the prices paid today.
 
 \subsection{Adjusting for inflation}
 % explore-prices.r
 
-A commonly used reference for determining inflation is the consumer price index ({\sc cpi}) produced by the Bureau of Labor Statistics, \url{http://www.bls.gov/CPI}.  The {\sc CPI} calculates the price of a weighted ``basket'' of frequently purchased consumer goods.  This price is calculated monthly, and we will use the West coast series, series CUUR0400SA0.
-To adjust for inflation, we extract the data for the period data we have housing sales, and at for each month we calculate the ratio between the index at that time and at the end of 2008: we are adjusting all prices to 2008 prices. This is a common pattern in data analysis: we combine our original data with new data that provides context and helps us understand it better.  
-
-% In this case, we want to control for changes in relative buying power (i.e.\ inflation).  Even over this relatively short time span it's a bad idea to ignore inflation: \$1\,000 2004 dollars would be worth\$1\,170 today.
-% 
-
-To show the effect of inflation, we index the CPI time series to the first date in the data.  This means we divide all of the values by the first value, converting the values into proportions.  This makes it easy to read the effect of inflation from the graph: a value of 1.1 represents a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout this analysis.  Figure~\ref{fig:inflation} shows the CPI-based inflation measurement and the affect of adjusting prices for inflation.  Inflation has been steadily climbing over the last five years, and failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  However, inflation adjustment is complicated because housing prices form a major part of the CPI, and because of this we chose not to inflation adjust the prices.
+The data is over a relatively short period of time (almost 6 years), but we might wonder if it's necessary to adjust for inflation, to ensure that the prices paid in 2003 are comparable to the prices paid today.  A commonly used reference for calculating inflation is the consumer price index ({\sc cpi}) produced by the Bureau of Labor Statistics, \url{http://www.bls.gov/CPI}.  The {\sc cpi} calculates the price of a weighted ``basket'' of frequently purchased consumer goods.  This price is calculated monthly, and we will use the West coast series, series CUUR0400SA0.  We use this series to adjust for inflation as follow.  We want to adjust all values to 2003 dollars, so we divide each {\sc cpi} value by its value in March 03.  This operation is also known as indexing.  This series gives the relative worth of a 2003 dollar at each point in time and makes it easy to read the effect of inflation from the graph: a value of 1.1 represents a cumulative inflation of 10\% from the start of the data.  Indexing is a very useful technique and we'll use it throughout our analysis.  Figure~\ref{fig:inflation} shows the {\sc cpi}-based inflation measurement and the effect of adjusting prices for inflation.  Inflation has been steadily climbing over the last five years, and failing to adjust for inflation makes the increasing trend prior to mid 2007 look more pronounced.  However, inflation adjustment is complicated because housing prices form a major part of the {\sc cpi}, and because of this we chose not to inflation adjust the prices.
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5 \linewidth]{daily-cpi}%
     \includegraphics[width=0.5 \linewidth]{daily-price-adj}
-  \caption{(Left) Inflation, indexed at 1 at start of series.  (Right) Inflation adjusted prices (black), and unadjusted prices (grey).  Failing to adjusting for inflation makes the rise look steeper, but has little effect on the decline.}
+  \caption{(Left) Inflation, indexed at 1 at start of series.  (Right) Inflation adjusted prices in 2003 dollars (black), and unadjusted prices (grey).  Failing to adjusting for inflation makes the rise look steeper, but has little effect on the decline.}
   \label{fig:inflation}
 \end{figure}
 
@@ -142,29 +133,29 @@ With this basic overview in hand, it's time to start drilling into the details. 
 \subsection{The rich get richer and the poor get poorer}
 % explore-deciles.r
 
-Has the housing crisis equally affected the rich and the poor?  Has the effect of the crisis been to improve or worsen the relative equality of these two groups?  In this section, we will explore how the crisis has effected the prices broken down by decile.  A big caveat is that we're looking at the Bay Area, so homes will be more expensive than many other places in the country, but we still might expect to see some relative inequalities.
+Has the housing crisis equally affected the rich and the poor?  Has the effect of the crisis been to improve or worsen the relative equality of these two groups?  In this section, we will explore how the crisis has affected the distribution of housing prices.  A big caveat is that we're looking at the Bay Area, so homes will be more expensive than many other places in the country, but we still might expect to see some relative inequalities.
 
-To start our exploration, we calculate price deciles for each month.  The deciles are the nine prices that 10\%, 20\%, 30\%, 40\%, 50\%, 60\%, 70\%, 80\%, and 90\% of houses are cheaper than.  This is a succinct summary of the {\it distribution} of the prices for each month: instead of just looking at the average price, we are looking at nine numbers that summarise the complete distribution of the prices. 
+To start our exploration, we calculate price deciles for each month.  The deciles are the nine prices that 10\%, 20\%, 30\%, 40\%, 50\%, 60\%, 70\%, 80\%, and 90\% of houses cost less than.  This is a succinct summary of the {\it distribution} of the prices for each month: instead of just looking at the average price, we are looking at nine numbers that summarise the complete distribution of the prices. 
 
 Figure~\ref{fig:decile-raw} shows how these deciles have changed over time.  The top line is the ninth decile, the price that 90\% of houses are less than, and the bottom line is the first decile, the price that only 10\% of houses are cheaper than.  The line in the middle is the median, the price which divides the houses into halves, half cheaper and half more expensive.  The lines are coloured from dark to light from expensive to cheap.  Each line follows a similar pattern, and we can see the effect of the housing bubble in mid 2007, particularly in the most expensive houses.  
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-raw}
-  \caption{Monthly average house price within each decile.  Cheaper houses (lower deciles) are coloured lighter.} 
+  \caption{Monthly average house price within each decile.  Lower lower deciles have lighter colours.} 
   \label{fig:decile-raw}
 \end{figure}
 
-This plot lets us compare the absolute values of each decile, but maybe it is more appropriate to look at the relative prices: how have the prices changed proportionately.  One way to think about the relative price is to compare how each decile has changed from its starting value.  To do this we index each decile, just as we did for the {\sc cpi}. Figure~\ref{fig:decile-ind} shows these indices.  Each decile starts at one, and we can see the relative change in prices over time.  What's interesting in this plot is that the cheaper houses (the lighter coloured lines) seem to peak higher and earlier (mid 2005) than the most expensive houses, and then drop more rapidly.  The cheapest houses lost 43\% of their 2003 value compared to only 9\% for the most expensive houses.
+This plot lets us compare the absolute values of each decile, but maybe it is more appropriate to look at the relative prices: how have the prices changed proportionately?  One way to look at the relative price is to compare each decile to its initial value.  To do this we index each decile, dividing each series by its initial price, just as we did for the {\sc cpi}. Figure~\ref{fig:decile-ind} shows these indices.  Each decile starts at one, and we can see the relative change in prices over time.  What's interesting in this plot is that the cheaper houses (the lighter coloured lines) seem to peak higher and earlier (mid 2005), and then drop more rapidly.  The cheapest houses lost 43\% of their 2003 value compared to only 9\% for the most expensive houses.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-ind}
-  \caption{Indexed house price within each decile.  The average price of cheaper houses peaked earlier and higher, and fell more steeply.}
+  \caption{Indexed house price within each decile.  The average price of cheaper houses peaked higher and earlier, and fell more steeply.}
   \label{fig:decile-ind}
 \end{figure}
 
-Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we have divided all the prices by the price of an average (median) home.  The values now represent a proportion of the median house price: a price of 1.2 represents a price 20\% higher than the median, and 0.8 20\% lower. Since the housing crisis, expensive houses have been getting relatively more expensive and cheap houses relatively cheaper.  One effect of the housing crisis has been to increase the difference between the cheapest and most expensive houses.
+Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we have divided all the prices by the price of an average (median) home.  The values now represent a proportion of the median house price: a price of 1.2 represents a price 20\% higher than the median, and 0.8 20\% lower. Since the beginning of 2007 (before the housing crisis) the relative inequality has benn growing.  This is interesting, and would be interesting to follow up on --- has it preceded other crises?
 
 \begin{figure}[htbp]
   \centering
@@ -176,9 +167,9 @@ Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we 
 \subsection{Geographic differences}
 % explore-city.r
 
-We've just seen how the housing crisis has affected expense and cheap houses differently, but how does has it affected different cities?  In this section we'll explore how the effect of the housing crisis has varied over different cities in the bay area.  To do this, we'll need to first pick out all the cities that have a decent amount of data.  We decided to focus on all all cities with more than 2910 sales in total, an average of 10 sales per week.  This gives us 58 cities (of an original 245) with a total of 428,415 sales (out of an original 521,726, 82\%).  
+We've just seen how the housing crisis has affected expense and cheap houses differently, but how does has it affected different cities?  In this section we'll explore how the effect of the housing crisis has varied over different cities in the bay area.  Because we are looking at the average prices, we'll need to pick out cities with a decent amount of data.  We decided to focus on all cities with more than an average of 10 sales per week. This gives us 58 cities (out of an 245, 24\%) with 428,415 sales (out of 521,726, 82\%).  
 
-From this data we then calculated the average house price for each city for each week.  Figure~\ref{fig:spaghetti} shows this data, with each city as a different line.  Statisticians have an evocative name for this type of plot: the spaghetti plot.  It's very hard to see anything in the big jumble of lines.  One way to improve this is to smooth each line, to to focus on the overall trend, removing short-term variation that we're not so interested in. 
+We then calculated the average weekly house price. Figure~\ref{fig:spaghetti} shows these prices, with each city drawn with a different line.  Statisticians have an evocative name for this type of plot: the spaghetti plot.  It's very hard to see anything in the big jumble of lines.  One way to improve this is to smooth each line, to focus on the long-term trend and remove the short-term variation that we're not so interested in. 
 
 \begin{figure}[htbp]
   \centering
@@ -187,9 +178,9 @@ From this data we then calculated the average house price for each city for each
   \label{fig:spaghetti}
 \end{figure}
 
-There are many different ways to create smooth curves, and our purposes of them most of them are fine.  We used generalised additive models ({\sc gam}) are a generalisation of linear models \citep{wood:2006}, which by finding the optimum trade-off between fitting the data and minimising the wiggliness of the line.  The effect is to remove noisy short-term effects and focus on the long-term trend.  This is what we want: we're not interested in daily or weekly changes, we're interested in the long-term changes related to the housing crisis.
+There are many different ways to create smooth curves, and for our purposes of them most of them are fine.  We used generalised additive models ({\sc gam}), a generalisation of linear models \citep{wood:2006}, that fit smooth curves by optimising the trade off between being close to the data and being very smooth. The effect is to remove noisy short-term effects and focus on the long-term trend.  This is what we want: we're not interested in daily or weekly changes, just the long-term changes related to the housing crisis.
 
-The left part of Figure~\ref{fig:smoothed} shows the the result of this smoothing. This is a big improvement and we can now actually see some patterns! Note the big difference in scales between this plot and the first: smoothing the data has removed the large spikes which represent the sales of few very expensive houses. We'll also index each city like we indexed each decile: dividing out the starting price puts each city onto an common scale and allows us to focus on the changes.
+The left part of Figure~\ref{fig:smoothed} shows the the result of this smoothing. This is a big improvement and we can now actually see some patterns! Note the big difference in scales between this plot and the first: smoothing the data has removed the large spikes which represent the sales of few very expensive houses. We'll also index each city like we indexed each decile: dividing out the starting price puts each city onto an common scale and allows us to focus on the changes.  This is show on the right of Figure 7.  
 
 \begin{figure}[htbp]
   \centering
@@ -199,9 +190,7 @@ The left part of Figure~\ref{fig:smoothed} shows the the result of this smoothin
   \label{fig:smoothed}
 \end{figure}
 
-There are still a lot of the lines in that plot and we might be missing important findings, so instead of displaying all the cities in plot, we looked at each city individually, as in Figure~\ref{fig:individual}.  This takes up a lot of room, but if you have a big screen or a good printer it's really worthwhile.  We can pick out some interesting patterns: Berkeley and San Francisco show less of a peak and less of a drop, and Mountain View seems not all affected by the crisis.  Other cities, like Oakley, Vallejo, and San Pablo, show big peaks and big drops: 
-
-
+There is a still a lot of variation, but we can start to see a pattern of increasing values until mid 2007, and then decreasing values afterwards.  To get any further, we need to look at the cities individually, as in Figure~\ref{fig:individual}.  This takes up a lot of space, but if you have a big screen or a good printer it's really worthwhile.  We can pick out some interesting patterns: Berkeley and San Francisco show less of a peak and less of a drop, and Mountain View seems not all affected by the crisis.  Other cities, like Oakley, Vallejo, and San Pablo, show big peaks and big drops.
 
 % Figure~\ref{fig:clustering} shows one way of clustering the cities into three groups.  Note how the groups are basically formed along the diagonal: it's the difference between the peak and the plummet that seems to be telling us the most.  Figure~\ref{fig:clustered} shows the result of the clustering, with each of the three groups displayed in its own panel.  The groups are somewhat arbitrary (we could shift the boundaries a little in either direction and have little effect)
 % 
@@ -219,7 +208,7 @@ There are still a lot of the lines in that plot and we might be missing importan
 %   \label{fig:clustered}
 % \end{figure}
 
-After a few false starts we realised that there was one main feature that seemed to distinguish the different cities: difference between prices at the peak of the boom and the depth of their most recent plummet.  Figure~\ref{fig:groups} groups the cities by the value of this new variable.  The divisions are arbitrary, but you can see how the cities in each group follow a similar pattern.  This supports our view that this single number is a good summary for the effect of the housing crisis.
+After a few false starts we realised that there was one main feature that seemed to distinguish the different cities: the difference between prices at the peak of the boom and the depth of their most recent plummet.  We create a new variable drop, that is the difference between the price in Feburary 2006 (at the height of the boom) and the price in November 2008 (the current doldrums). Figure~\ref{fig:groups} groups the cities by this new variable.  The divisions are arbitrary, but you can see how the cities in each group follow a similar pattern: the bigger the boom, the bigger collapse.  This suggests that this single number does a good job of summarising the different effects of the housing crisis.
 
 \begin{figure}[htbp]
   \centering
@@ -232,12 +221,12 @@ We have determined that some cities showed a different pattern to others, but wh
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics[width=0.4\linewidth]{cities-geo-changes}
+    \includegraphics[width=0.5\linewidth]{cities-geo-changes}
   \caption{The geographic distribution of price drops.}
   \label{fig:geo}
 \end{figure}
 
-The census quickfacts site, e.g.\ \url{http://quickfacts.census.gov/qfd/states/06/0649670.html}, provides a number of interesting demographic variables for each city.  Unfortunately the data isn't available in an easily downloadable format, so we had to resort to another set of scripts to scrape the data and convert it into csv.  There were also some differences in what constituted a city in the census data and so we could only match 46 out of the full 58 cities.  The cities that weren't matched were either too small, or included in a large city in the census data.
+The census quickfacts site, e.g.\ \url{http://quickfacts.census.gov/qfd/states/06/0649670.html}, provides a number of interesting demographic variables for each city.  Unfortunately the data isn't available in an easily downloadable format, so we had to resort to another set of scripts to scrape the data and convert it into csv.  There were also some differences in what constituted a city in the census data and so we could only match 46 out of the full 58 cities.  The cities that we couldn't match either too small, or included in a larger city in the census data.
 
 \begin{figure}[htbp]
   \centering
@@ -249,7 +238,7 @@ The census quickfacts site, e.g.\ \url{http://quickfacts.census.gov/qfd/states/0
   \label{fig:census}
 \end{figure}
 
-Looking at these variables revealed the following interesting relationships.  The most affected cities have a high percentage of  babies and children, bigger households, fewer bachelors degrees, and longer commutes.  Most significantly these cities also have lower incomes, which is probably the factor that drives all of the other relationships. Figure~\ref{fig:census} shows three scatterplots showing the relationship between the drop and income, percent of college graduates and commute time.  The relationship with commute time is weak, but striking in that all of the cities with particularly long commute times have particularly large drops.  It appears that the housing crisis  has been relatively more damaging to the house prices of people who live in poorer areas.
+Looking at the demographic variables revealed that the most affected cities have a high percentage of babies and children, bigger households, fewer bachelors degrees, and longer commutes.  Most significantly these cities also have lower average incomes, which is probably the factor that drives all of the other relationships. Figure~\ref{fig:census} shows three scatterplots showing the relationship between the drop and income, percent of college graduates and commute time.  The relationship with commute time is weak, but striking in that all of the cities with particularly long commute times (>25 minutes) have particularly large drops.  It appears that the housing crisis  has been relatively more damaging to poorer areas.
 
 \begin{figure}[htbp]
   \centering
@@ -260,7 +249,7 @@ Looking at these variables revealed the following interesting relationships.  Th
 
 \section{Exploring San Francisco}
 
-Having explored the difference between cities, we turned to look at a single city in more detail.  We chose San Francisco because it's the city that collectively we were most familiar with, and it has some iconic features that it should be easy for others to identify as well.  We started our exploration by extracting all addresses within San Francisco that were geocoded to block interpolation or better, giving us a total of 25,377 addresses.  With this data we did a very simple plot: a scatterplot of the latitudes and longitudes, Figure~\ref{fig:sf-geo}.  For the residential parts of SF, this gives an amazingly detailed picture.  We can see Golden Gate and San Bruno parks, but our view of downtown is patchy, because there are few residential homes there.
+Having explored the difference between cities, we turned to look at a single city in more detail.  We chose San Francisco because it's the city that we were most familiar with, and it has some iconic features that it should be easy for others to identify as well.  We started our exploration by extracting all addresses within San Francisco that were geocoded to block interpolation or better, giving us a total of 25,377 addresses.  With this data we did a very simple plot: a scatterplot of the latitudes and longitudes, Figure~\ref{fig:sf-geo}.  For the residential parts of SF, this gives an amazingly detailed picture.  We can the orientation of the streets, the waterfront boundaries and parks.  Our view of some parts, like downtown, is more patchy because there are few residential homes there.
 
 \begin{figure}[htbp]
   \centering
@@ -270,7 +259,7 @@ Having explored the difference between cities, we turned to look at a single cit
   \label{fig:sf-geo}
 \end{figure}
 
-One problem with this plot is we lose all feel for how many sales are in each location.  Figure~\ref{fig:sf-n} shows two attempts to recapture the information.  On the left, we have a bubbleplot with the size of the location proportional to the number of sales.  We now get quite a different view of the downtown: there are very large number of sales down there.  Looking closer at the data reveals that these are apartment buildings with hundreds of apartments.  On the right, we have divided SF in to squares of 0.005 latitude and longitude and counted the number of houses in each bin.  This gives us higher level view of where the houses are and will be useful for the next step, exploring how prices vary geographically within the city.
+One problem with this plot is we lose all feel for how many sales are in each location. Figure~\ref{fig:sf-n} shows two attempts to recapture the information. On the left, we have a bubbleplot with the size of the location proportional to the number of sales. We now get quite a different view of the downtown: there are a lot of sales there. Looking closer at the data reveals that these are apartment buildings with hundreds of apartments. On the right, we have divided SF into squares of 0.005 latitude and longitude and counted the number of houses in each bin. This gives us higher level view showing where the majority of houses are.
 
 \begin{figure}[htbp]
   \centering
@@ -280,13 +269,13 @@ One problem with this plot is we lose all feel for how many sales are in each lo
   \label{fig:sf-n}
 \end{figure}
 
-Using that same binning, we calculate the mean and coefficient of variation of the house prices.  The coefficient of variation is the standard deviation divided by the mean.  We use it here because a variation of \$100,000 is relatively much more important when houses are cheap compared to when they are expensive.  Figure~\ref{fig:sf-price} shows the geographic distribution of these two summary statistics.   We can see the most expensive houses border the Presidio and coast to the North of SF.  There also seems to be a peak in the south West - this is the affluent St Francis wood area, near San Francisco State University.  There is an interesting geographic trend in the coefficient of variation - it seems to increase towards the Northwest.  We don't know enough about San Francisco to hypothesise to why this occurs.
+Using that same binning, we calculate the mean and coefficient of variation of the house prices.  The coefficient of variation is the standard deviation divided by the mean.  We use it here because a variation of \$100,000 is relatively much more important when houses are cheap compared to when they are expensive.  Figure~\ref{fig:sf-price} shows the geographic distribution of these two summary statistics.   We can see the most expensive houses border the Presidio and coast to the North of SF.  There also seems to be a peak in the Southwest - this is the affluent St Francis wood area, near San Francisco State University.  There is an interesting geographic trend in the coefficient of variation: it seems to increase towards the Northwest.  We don't know enough about San Francisco to guess as to why this occurs.
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5\linewidth]{sf-bin-price}%
     \includegraphics[width=0.5\linewidth]{sf-bin-cv}
-  \caption{Geographic distribution of house prices.  Using the same binning as above, the mean (left) and coefficient of variation (right) are computed and displayed using colour.  }
+  \caption{Geographic distribution of house prices.  Using the same binning as above, the mean (left) and coefficient of variation (right) are computed and displayed using shades of grey.}
   \label{fig:sf-price}
 \end{figure}
 
@@ -294,9 +283,11 @@ Using that same binning, we calculate the mean and coefficient of variation of t
 
 \section{Conclusions}
 
-We have used relatively simple statistical tools like indexing, quantiles, smoothing and binning to explore a large complex data set.  We start with broad summaries and then dig down to explore the details.  All the tools we used are open source: you can download them and replicate our work yourselves. This principle of reproducibility \citep{gentleman:2007} is very important for science - we provide enough detail that you can follow our work every step of the way, and you can run a script to reproduce exactly what we did.  If we made a mistake, you can easily discover it, fix it and observe the effects on our conclusions.  
+ % Both code and data are licensed with the permissive MIT license.  We'll illustrate snippets of code and fragments of the data inline, but each section of this chapter will also point you to a matching file online.  The files don't cover the exactly content as each section: you can see some of the dead ends we tried, and some of the plots that weren't quite good enough to make it into the plot.  
+ % 
+We have used relatively simple statistical tools like indexing, quantiles, smoothing and binning to explore a large complex data set.  We started with broad summaries and then dig down to explore the details.  This is a large dataset and we have only just scratched the surface.  If the data has caught your interest and you'd like to follow our work in more detail and try out some your own ideas, we have made all data and code available in a git repository at \url{https://github.com/hadley/sfhousing}.  All the tools we used are open source: you can download them and replicate our work yourselves. This principle of reproducibility \citep{gentleman:2007} is very important for science: we provide enough detail that you can follow our work every step of the way, and you can run a script to reproduce exactly what we did.  If we made a mistake, you can easily discover it, fix it and observe the effects on our conclusions.  
 
-Making a data analysis reproducible can be a lot of extra work, but once the principles are ingrained in your workflow, it doesn't take that much time.  Importantly, it is not only useful for others, but also to future-you.  If you haven't made your analysis reproducible and you come back to it 6 months or a year later (quite common if you are submitting the results to an academic journal), you may look at the code and wonder what on earth you were thinking.  If you have made the analysis reproducible and included plenty of comments about your thinking, then you save a lot of time trying to reproduce your previous work and state of mind.
+Making a data analysis reproducible can be a lot of extra work, but once the principles are ingrained in your workflow, it doesn't take that much time.  Importantly, it is not only useful for others, but also to future-you.  If you haven't made your analysis reproducible and you come back to it 6 months or a year later (quite common if you are submitting the results to an academic journal), you may look at the code and wonder what on earth you were thinking.  If you have made the analysis reproducible and included plenty of comments about your thinking, then you save a lot of time trying to reproduce your previous work and state of mind. It also very useful if your data changes.    In our case, we updated just before writing up the paper so that we had the latest data off the website.  Data changes a lot more than you might think.  Even when your data is about something that has already happened, often the data will change  as errors are discovered and fixed.  Every statistician has a story about a nightmare client whose data would not stay the same from week-to-week.
 
 Another tool that we find useful is source code control.  In an analogous way to software development, this makes it easy to throw away parts of the analysis that don't work or have been superseded.  If you read the code on the website you'll see that (by and large) the analysis follows a fairly logical flow.  This is not how it starts off!  Data analysis is a fairly creative process, with many blind alleys that don't lead anywhere, mistakes and alternative approaches.  Leaving all of these in makes it hard to follow exactly what we did, but removing them completely makes it hard to see all the things that we tried.  Using a code versioning system leaves us with a happy medium where the false paths are not immediately visible, but can be looked up (although current tools are somewhat lacking for this purpose).
 
