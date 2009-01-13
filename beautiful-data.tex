@@ -272,7 +272,7 @@ We have determined that cities have different patterns, but we don't yet know wh
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5\linewidth]{cities-geo-changes}
-  \caption{The geographic distribution of price drops.}
+  \caption{The geographic distribution of {\em price drop}.  The worst hit towns tend to be to the north and the east. The single triangle represents the location of Mountainview, the only city where the sale price has continued to increase. }
   \label{fig:geo}
 \end{figure}
 
@@ -286,7 +286,7 @@ The US Census Bureau provides demographic data from recent surveys at both the c
   \includegraphics[width=0.33\linewidth]{cities-grads}%
   \includegraphics[width=0.33\linewidth]{cities-commute}
   
-  \caption{From left to right, the relationship between the drop in house prices and average income, percent of college graduates and average commute time.}
+  \caption{From left to right, the relationship between the decline in house prices ({\em price drop}) and average income, percentage of college graduates and average commute time.}
   \label{fig:census}
 \end{figure}
 
@@ -319,7 +319,7 @@ Having explored the difference between cities, we turned to look at a single cit
   \centering
   \includegraphics[height=2in]{sf-geo}%
   \includegraphics[height=2in]{sf-map}
-  \caption{(Left) A small point is drawn for every home sale in the data.  It gives us a pretty feel for the layout of San Franciscio. (Right) For comparison, a street map of San Francisco from \url{http://openstreetmap.com}}
+  \caption{(Left) A small point is drawn for every residential sale in the data.  It gives us a pretty feel for the layout of San Franciscio. (Right) For comparison, a street map of San Francisco from \url{http://openstreetmap.com}}
   \label{fig:sf-geo}
 \end{figure}
 
@@ -329,7 +329,7 @@ One problem with this plot is we cannot see the number of sales at each specific
   \centering
     \includegraphics[width=0.5\linewidth]{sf-geo-n}%
     \includegraphics[width=0.5\linewidth]{sf-bin-n}
-  \caption{The geographic distribution of numbers of home (house, apartment, etc.) sales.  (Left) this plot is similar to the previous plot, but the size of the dot is now proportional to the number of sales at each unique location.  This changes the picture significantly, as the large apartment complexes in the city now pop out.  (Right) A display of home sales at a higher level of aggregation: latitude and longitude are divided into a small number of bins and the number of sales in each bin is counted and displayed as the colour of the bin.}
+  \caption{The geographic distribution of numbers of residential sales.  (Left) this plot is similar to the previous plot, but the size of the dot is now proportional to the number of sales at each unique location.  This changes the picture significantly, as the large apartment complexes in the city now pop out.  (Right) A display of sales at a higher level of aggregation: latitude and longitude are divided into a small number of bins and the number of sales in each bin is counted and displayed as the colour of the bin.}
   \label{fig:sf-n}
 \end{figure}
 
@@ -340,7 +340,7 @@ Using that same binning, we calculated the mean and coefficient of variation of 
   \centering
     \includegraphics[width=0.5\linewidth]{sf-bin-price}%
     \includegraphics[width=0.5\linewidth]{sf-bin-cv}
-  \caption{Geographic distribution of home prices.  Using the same binning as above, the mean (left) and coefficient of variation (right) are computed and displayed using shades of grey.}
+  \caption{Geographic distribution of home prices.  Using the same binning of latitude and longitude as in the previous figure, the mean (left) and coefficient of variation (right) are computed and displayed using shades of grey.}
   \label{fig:sf-price}
 \end{figure}
 
