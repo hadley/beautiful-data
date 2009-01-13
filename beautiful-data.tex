@@ -87,9 +87,13 @@ Alameda County,Alameda,94501,1316 Grove Street,637000,3,2700,1168,1910,2003-04-2
 This is a little less human-readable than the previous form, but is very easy to work with using R.  Another minor advantage is that it is much smaller than the original:  45 vs 90 megabytes.  If you look closely at the sample data you might notice something that needs some explanation: the {\bf NA}s.  NA stands for not applicable, and is the sentinel value that R uses to represent missing values. We must take care to account for the missing values in our analysis.
 %Missing values have special semantics which, by default, will propagate missingness throughout a summary: 5 + NA = NA, 5 < NA = NA and so on. We always need to make a deliberate decision to drop the missing values from an analysis.
 
-It takes only a few minutes to parse the files for all 293 weeks and create {\tt house-sales.csv}, a csv file with 521,726 observations and 11 variables.  It took much more time to tweak the parser to get all the edge cases right: we needed to convert prices to regular numbers (by removing \$ and ,), parse the dates into a consistent format, and fill in missing values for fields that didn't occur in all of the tables.  This is quite common in data analysis: it can take far longer to prepare the data in a consistent, machine-readable form than it takes to perform the actual analysis.
+It takes only a few minutes to parse the files for all 293 weeks and create {\tt house-sales.csv}, a csv file with 521,726 observations and 11 variables.  It took much more time to tweak the parser to get all the edge cases right: we needed to convert prices to regular numbers (by removing \$ and ,), parse the dates into a consistent format, and fill in missing values for fields that didn't occur in all of the tables. 
+
+% it can take far longer to prepare the data in a consistent, machine-readable form than it takes to perform the actual analysis.
 % HW: this wasn't the point I was trying to make (although I totally agree with it) - I was arguing that programming time out weighs computation time.  Speeding up computation by a factor of 10 wouldn't have that much effect on total analysis time, even for this very large data set)
 %the time taken to compute the answer is totally overwhelmed by the time necessary to develop the correct approach.
+
+% dfs- I now understand your point.  I can't find a concise way to express it, and I'm not sure taking the time to explain it fully is justified for the average reader.  What to do?  The paragraph stands nicely on its own.
 
 \section{Geocoding} 
 
@@ -220,6 +224,7 @@ There is a still a lot of variation, but we can start to see a pattern of increa
 
 % David, Hadley -- help me out with this paragraph, ok?
 % HW: I think it looks pretty good.  Made a couple of little tweaks
+% dfs: thanks.
 
 Recall that in our earlier discussion about San Jose, we noted that the raw data describes many neighbourhoods of San Jose as cities in their own right.  We know that this data is a bit messy, with the same address occasionally being associated with different neighbourhoods, but this data suggests that the neighbourhoods have distinct characters.  Berryessa, East San Jose, North San Jose, and South San Jose have similar curves, showing a sharp peak and an equally sharp drop;  Cambrian, San Jose, and West San Jose, on the other hand, don't show much of a decline.
 
@@ -251,7 +256,7 @@ After further investigation we concluded that there was one main feature that se
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.75\linewidth]{cities-indexed-grouped}
-  \caption{Plots grouping the curves for towns by their value of {\em pricedrop}.  The towns in the upper left plot had the largest price declines (between -.8 and -1); the town at the lower right (Mountainview) is the only one that shows no decline.  The patterns within each group are similar, suggesting that this single number provides a useful way to divide the cities into groups.}
+  \caption{Plots grouping the curves for towns by their value of {\em price drop}.  The towns in the upper left plot had the largest price declines (between -.8 and -1); the town at the lower right (Mountainview) is the only one that shows no decline.  The patterns within each group are similar, suggesting that this single number provides a useful way to divide the cities into groups.}
   \label{fig:groups}
 \end{figure}
 
@@ -277,8 +282,6 @@ The US Census Bureau provides demographic data from recent surveys at both the c
   \caption{From left to right, the relationship between the drop in house prices and average income, percent of college graduates and average commute time.}
   \label{fig:census}
 \end{figure}
-
-% The use of 'drop' in the following paragraphs is confusing.  dfs
 
 A glance at the demographic variables revealed that the most affected cities have a high percentage of babies and children, bigger households, fewer bachelors degrees, and longer commutes.  Most significantly these cities also have lower average incomes, which is probably the factor that drives many of the other relationships. Figure~\ref{fig:census} includes three scatterplots that illustrate the relationship between the drop in home prices and income, percentage of college graduates, and commute time.  The correlation between {\em price drop} and commute time is weak, but note that all of the cities with the longest commute times (more than 35 minutes) have particularly large drops in price. It appears that the housing crisis has been relatively more damaging in poorer areas.
 
