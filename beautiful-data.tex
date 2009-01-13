@@ -126,25 +126,31 @@ Where possible we tried to correct any errors.  When that was not possible, we u
 
 \section{Analysis}
 
-It is best to start an analysis with a very broad overview.  Since we are interested in the housing crisis, we will look at the weekly number of sales and the average price.  Once we have a feel for the overall patterns, we will divide the data into smaller pieces and see how they compare to each other and to the overall patterns.  We will examine the data using house price (from most expensive to least), and spatially, both between cities and within a single city (San Francisco).
+% This section started with strategy and ended with the data; I swapped that ordering.  dfs
+
+For a broad overview of the changes in the housing market, we'll start with the evolution of the average sale price and number of sales.  Since the data is reported weekly, that's a natural time unit to use.
 
 % dfs:  check that the increase in weekly sales isn't an artifact of more towns and counties being reported in the Chronicle.
+% Hadley removed the 4 counties for which we have no data before 2008; the trends were unchanged.
 
-Figure~\ref{fig:daily} shows weekly average sale price and number of sales for the 293 weeks in the data.  There are some very interesting patterns.  The behavior of the average price is striking, with an increasing trend until June 2007 and then a precipitous drop to the present day ~--~ a clear illustration of the boom and bust in housing prices.  Sales show a surprisingly different pattern.  Starting near the middle of 2006, sales volume decreases until early 2008, when it begins suddenly to increase. One possibility is that by this point house prices had dropped enough that buyers were shopping for bargains again.
+Figure~\ref{fig:daily} shows weekly average sale price and number of sales for the 293 weeks in the data.  There are some very interesting patterns.  The behavior of the average price is striking, with an increasing trend until June 2007 and then a precipitous drop to the present day ~--~ a clear illustration of the boom and bust in housing prices.  
+
+Sales look quite different.  We see a seasonal effect, with fewer sales in the winter months. (This may be a good place to note that the data only rarely includes the true closing date, so we're using the date when the sale was reported in the newspaper, which may be four to six weeks later than the closing.)  Once we look past the seasonal effect, we see something else. Starting by the middle of 2006, sales volume decreases until early 2008, then suddenly begins to rise again. One possibility is that by this point house prices had dropped enough that buyers were shopping for bargains again; some of these could even be foreclosure sales.
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5 \linewidth]{daily-price}%
     \includegraphics[width=0.5 \linewidth]{daily-sales}%
-  \caption{Weekly average prices (left) and sales (right).}
+  \caption{Weekly average prices (left) and sales (right), showing clear evidence of the housing boom and bust.  Note, however, the uptick in sales in 2008.}
   \label{fig:daily}
 \end{figure}
 
+These simple plots suggest some directions for further exploration.  Are these patterns the same for homes in all price ranges?  What about different cities, or within neighbourhoods of a single city?  To investigate these questions, we'll follow roughly the same procedure:  We'll partition the data in different ways and compare the patterns for each partition.  We will create partitions based on house price (from most expensive to least) and physical location, both between cities and within a single city (San Francisco).
 
 \subsection{The influence of inflation}
 % explore-prices.r
 
-The data were collected over a relatively short period of time (almost 6 years), but we might wonder if it is necessary to adjust for inflation, to ensure that the prices paid in 2003 are comparable to the prices paid today.  A commonly used reference for calculating inflation is the consumer price index ({\sc cpi}) produced by the Bureau of Labor Statistics, \url{http://www.bls.gov/CPI}.  The {\sc cpi} calculates the price of a weighted ``basket'' of frequently purchased consumer goods and services.  This price is calculated monthly, and we will use the West coast series, series CUUR0400SA0, to adjust for inflation as follows.  We want to adjust all values to 2003 dollars, so we divide each {\sc cpi} value by its value in March 2003.  This operation is also known as indexing.  It gives the relative worth of a 2003 dollar at each point in time and makes it easy to read the effect of inflation from the graph: A value of 1.1 represents a cumulative inflation of 10\% from the start of the data.  
+Before proceeding with the analysis, though, we pause to consider inflation. The data were collected over a relatively short period of time (almost 6 years), but we wonder if we should adjust for inflation to ensure that the prices paid in 2003 are comparable to the prices paid in 2008.  A commonly used reference for calculating inflation is the consumer price index ({\sc cpi}) produced by the Bureau of Labor Statistics, \url{http://www.bls.gov/CPI}.  The {\sc cpi} calculates the price of a weighted ``basket'' of frequently purchased consumer goods and services.  This price is calculated monthly, and we will use the West coast series, series CUUR0400SA0, to adjust for inflation as follows.  We want to adjust all values to 2003 dollars, so we divide each {\sc cpi} value by its value in March 2003.  This operation is also known as indexing.  It gives the relative worth of a 2003 dollar at each point in time and makes it easy to read the effect of inflation from the graph: A value of 1.1 represents a cumulative inflation of 10\% from the start of the data.  
 %Indexing is a very useful technique and we'll use it throughout our analysis.  
 Figure~\ref{fig:inflation} shows the {\sc cpi}-based inflation measurement and the effect of adjusting prices for inflation.  Inflation has been steadily climbing over the last five years, and we can see that the inflation-adjusted rise in house prices is slightly less pronounced than the unadjusted trend. 
 
@@ -168,30 +174,30 @@ Has the housing crisis equally affected the rich and the poor?  Has the effect o
 
 As a first step, we calculate price deciles for each month.  The deciles are the nine prices for which 10\%, 20\%, 30\%, 40\%, 50\%, 60\%, 70\%, 80\%, and 90\% of houses cost less.  This is a succinct summary of the {\it distribution} of the prices for each month: instead of just looking at the average price, as we did earlier, we have nine numbers that summarise the complete distribution of the prices.   (We don't display the curves for the minimum or maximum price, because they would be too choppy.)
 
-Figure~\ref{fig:decile-raw} shows how these deciles have changed over time.  The top line is the ninth decile, the price that 90\% of houses are less than, and the bottom line is the first decile, the price that only 10\% of houses are cheaper than.  The line in the middle is the median, the price which divides the houses into halves, half cheaper and half more expensive.  The lines are coloured from dark to light from expensive to cheap.  Each line follows a similar pattern, and we can see the effect of the housing bubble in mid 2007, particularly in the most expensive houses.  
+Figure~\ref{fig:decile-raw} shows how these deciles have changed over time.  The top line is the ninth decile, the price that 90\% of houses are less than, and the bottom line is the first decile, the price that only 10\% of houses are cheaper than.  The line in the middle is the median, the price which divides the houses into halves, half cheaper and half more expensive.  The lines are coloured from dark to light, from most to least expensive.  Each line follows a similar pattern, and we can see the effect of the housing bubble in mid 2007, particularly in the most expensive houses.  
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-raw}
-  \caption{Monthly average house price within each decile.  Lower deciles have lighter colours.} 
+  \caption{Monthly average house price within each decile.  Lower deciles have lighter colours.  This plot clearly shows the nature of the bubble for the more expensive residences, but it is unrevealing about its effects at the lowest price ranges. } 
   \label{fig:decile-raw}
 \end{figure}
 
-This plot lets us compare the absolute values of each decile, but maybe it is more appropriate to look at the relative prices: How have the prices changed proportionately?  One way to look at the relative price is to compare each decile to its initial value.  To do this we index each decile, dividing each series by its initial price, just as we did for the {\sc cpi}. Figure~\ref{fig:decile-ind} shows these indices.  Each decile starts at 1.0 and we can see the relative change in price over time.  The interesting aspect of this plot is that the cheaper houses (the lighter coloured lines) seem to peak higher and earlier (mid 2005), and then drop more rapidly thereafter.  The cheapest houses, in the lowest decile, lost 43\% of their 2003 value compared to only 9\% for the most expensive houses. Comparing Figures~\ref{fig:decile-ind} and \ref{fig:decile-ind}, we see that although the biggest decline in actual prices occurred at the expensive end, it was the cheapest houses that proportionately lost the most value. 
+This plot lets us compare the absolute values of each decile, but maybe it is more appropriate to look at the relative prices: How have the prices changed proportionately?  One way to look at the relative price is to compare each decile to its initial value.  To do this we index each decile, dividing each series by its initial price, just as we did for the {\sc cpi}. Figure~\ref{fig:decile-ind} shows these indices.  Each decile starts at 1.0 and we can see the relative change in price over time.  The interesting aspect of this plot is that the cheaper houses (the lighter lines) seem to peak higher and earlier (mid 2005), and then drop more rapidly thereafter. (Note the way the dark and light lines switch places in early 2007.) The cheapest houses, in the lowest decile, lost 43\% of their 2003 value compared to only 9\% for the most expensive houses. Comparing Figures~\ref{fig:decile-raw} and \ref{fig:decile-ind}, we see that although the biggest absolute decline in actual prices occurred at the expensive end, it was the cheapest houses that proportionately lost the most value. 
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-ind}
-  \caption{Indexed house price within each decile.  The average price of cheaper houses peaked higher and earlier, and fell more steeply.}
+  \caption{Indexed house price within each decile. (The lighter the colour, the lower the price.)  The bust began earlier at the low end: The average price of less expensive houses peaked higher and earlier, and fell more steeply.}
   \label{fig:decile-ind}
 \end{figure}
 
-Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we have divided all the prices by the median price.  The values now represent a proportion of the median house price: A value of 1.2 represents a price 20\% higher than the median, and 0.8 is 20\% lower. Since the beginning of 2007 (before the slump began) the relative inequality has been growing.  This is interesting: Does it suggest that a widening of the price gap between expensive and cheap homes is a precursor to a subsequent crisis? Has this preceded other crises? These questions could be investigated further.
+Another way to look at this inequality is Figure~\ref{fig:decile-rel}.  Here we have divided all the prices by the median price.  The values now represent a proportion of the median house price: A value of 1.2 represents a price 20\% higher than the median, and 0.8 is 20\% lower. Since the beginning of 2007, while the boom was still in full force at the high end, relative inequality has been growing.  This is interesting: Does it suggest that a widening of the price gap between expensive and cheap homes is a precursor to a subsequent crisis? Has this preceded other crises? These questions could be investigated further.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{decile-rel}
-  \caption{House prices, relative to the price of the median priced home.  The disparity in home prices is increasing.}
+  \caption{House prices relative to the price of the median priced home.  The disparity in home prices has been increasing since early 2007.}
   \label{fig:decile-rel}
 \end{figure}
 
@@ -205,7 +211,7 @@ We then calculated the average weekly house price. Figure~\ref{fig:spaghetti} sh
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.9\linewidth]{cities-price}
-  \caption{Average sale price for each week for each city.  This type of plot is often called a spaghetti plot.}
+  \caption{Average sale price for each week for each city.  This type of plot is often called a spaghetti plot.  It suggests the need for smoothing, because the week-to-week variation in the curves makes it impossible to detect trends.}
   \label{fig:spaghetti}
 \end{figure}
 
@@ -217,7 +223,7 @@ The left part of Figure~\ref{fig:smoothed} shows the result of this smoothing. T
   \centering
   \includegraphics[width=0.5 \linewidth]{cities-smooth}%
   \includegraphics[width=0.5 \linewidth]{cities-indexed}
-  \caption{Smoothed city-level weekly average sale prices.  Compared to the non-smoothed version it's easier to see the long-term trends, but it's still not particularly easy.}
+  \caption{Smoothed weekly average sale prices, one curve for each city (left).  The curves in the plot at right have been indexed to show proportional changes in price.  Patterns are beginning to emerge.}
   \label{fig:smoothed}
 \end{figure}
 
@@ -227,12 +233,12 @@ There is a still a lot of variation, but we can start to see a pattern of increa
 % HW: I think it looks pretty good.  Made a couple of little tweaks
 % dfs: thanks.
 
-Recall that in our earlier discussion about San Jose, we noted that the raw data describes many neighbourhoods of San Jose as cities in their own right.  We know that this data is a bit messy, with the same address occasionally being associated with different neighbourhoods, but this data suggests that the neighbourhoods have distinct characters.  Berryessa, East San Jose, North San Jose, and South San Jose have similar curves, showing a sharp peak and an equally sharp drop;  Cambrian, San Jose, and West San Jose, on the other hand, don't show much of a decline.
+Recall that in our earlier discussion about San Jose, we noted that the raw data describes many neighbourhoods of San Jose as cities in their own right.  Because of this, it sometimes happens that the same address is assigned to more than one neighbourhood, but this data suggests that the neighbourhoods have distinct characters.  Berryessa, East San Jose, North San Jose, and South San Jose have similar curves, showing a sharp peak and an equally sharp drop;  Cambrian, San Jose, and West San Jose, on the other hand, don't show much of a decline.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.9\linewidth]{cities-individual}
-  \caption{Individual plots for each city.}
+  \caption{Individual plots of the sales price for each city, smoothed and indexed.  These are exactly the curves that were plotted on top of one another in the previous figure (right).  San Pablo's curve shows the boom and bust of the housing market; Berkeley's curve shows less variation; Mountain View seems to be the only city where prices continue to rise. }
   \label{fig:individual}
 \end{figure}
 
