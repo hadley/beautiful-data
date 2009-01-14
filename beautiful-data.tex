@@ -344,27 +344,25 @@ Using that same binning, we calculated the mean and coefficient of variation of 
 
 \section{Conclusions}
 
- % Both code and data are licensed with the permissive MIT license.  We'll illustrate snippets of code and fragments of the data inline, but each section of this chapter will also point you to a matching file online.  The files don't cover the exactly content as each section: you can see some of the dead ends we tried, and some of the plots that weren't quite good enough to make it into the plot.  
- % 
+We have looked at the data from multiple angles, and we have seen the same things: The housing crisis has been relatively more damaging in poorer areas.  The boom and the bust hit lower-priced homes both earlier and harder; cities with lower average incomes peaked higher and dropped lower. A great deal of the boom was associated with new construction, most of which was aimed at the lower end of the market. Many of these new residences were built farther from San Francisco, in less developed areas where residents had lower average incomes, more children, and longer commutes. Although the biggest absolute decline in prices occurred at the high end, it was the less expensive houses that lost a greater proportion of their value.  
 
-We have looked at the data from several angles, and we have been consistently led to same conclusion: The housing crisis has been relatively more damaging in poorer areas.  Both the boom and the bust hit lower-priced homes earlier.  A great deal of the boom was associated with new construction, most of which was aimed at the lower end of the market.  Many of the new residences were built farther from San Francisco, in less developed areas where residents had lower average incomes, more children, and longer commutes.  The bust hit earlier and harder at the low end, too.  Although the biggest absolute decline in prices occurred at the high end, it was the less expensive houses that lost a greater percentage of their value.  
+All of this is consistent with what we have learned about sub-prime mortgages since the housing bust hit the headlines.  Many people with poor credit were granted mortgages with initially low monthly payments; when those payments grew, they were unable to meet them, and the rates of mortgage defaults and foreclosures began to rise. We speculated earlier that the increase in sales in 2008 may be associated with foreclosures, and an interesting next step would be to locate data on foreclosures and align it with our sales data.
 
-All of this is consistent with what we have learned about sub-prime mortgages since the housing bust entered the headlines.  Many people with poor credit were granted mortgages with initially low monthly payments; when those payments grew, they were unable to meet them, and the rates of mortgage defaults and foreclosures began to rise.  We speculated earlier that the increase in sales in 2008 may be associated with foreclosures, and an interesting next step would be to locate data on foreclosures and align it with our sales data.
+We have used relatively simple statistical methods such as indexing, computing quantiles, smoothing and binning to explore this large and complex data set.  We began with broad summaries and then dug deeper to explore the details, but we have only scratched the surface.  If the data has caught your interest and you'd like to follow our work in more detail, or try out some your own ideas, you can find all data and code in a git repository at \url{https://github.com/hadley/sfhousing}.  All the code we wrote (R, perl, and shell scripts) run on open source software, so anyone can replicate our work without buying expensive software. The principle of reproducibility \citep{gentleman:2007}, so critical in the laboratory sciences, is also important here:  If we made a mistake, you can discover it, fix it and observe the effects on our conclusions.  
 
-We have used relatively simple statistical methods such as indexing, computing quantiles, smoothing and binning to explore a large and complex data set.  We began with broad summaries and then dug deeper to explore the details, but we have only scratched the surface.  If the data has caught your interest and you'd like to follow our work in more detail, or try out some your own ideas, you can find all data and code in a repository at \url{https://github.com/hadley/sfhousing}.  All the tools we used are open source, so anyone should be able to replicate our work. The principle of reproducibility \citep{gentleman:2007} so critical in the laboratory sciences can be extended to this kind of analysis.  If we made a mistake, someone else should be able to discover it, fix it and observe the effects on our conclusions.  
+We enjoy working with data, exploring and learning from it. We hope we have shared our enthusiasm for data analysis with you, and have shown you some of the strategies and techniques that we find most useful.
 
-[ Shall we list our tools?  Don't know. 
-(linux, MacOS X are trademarked, so we'd need footnotes)]
+% [ Shall we list our tools?  Don't know. 
+% (linux, MacOS X are trademarked, so we'd need footnotes)]
+% HW: I mentioned the code we used above, maybe that's sufficient
 
-Tools: shell (wget, awk,); perl; R (ggplot2, plyr, reshape).
+% Both code and data are licensed with the permissive MIT license.  We'll illustrate snippets of code and fragments of the data inline, but each section of this chapter will also point you to a matching file online.  The files don't cover the exactly content as each section: you can see some of the dead ends we tried, and some of the plots that weren't quite good enough to make it into the plot.  
 
 %The creation of a reproducible data analysis can be a lot of extra work, but once the principles are ingrained in the workflow, it doesn't take that much time.  Importantly, it is not only useful for others, but also to the original analyst, who in time will likely forget the finer details of the work. A well-commented reproducible analysis will save a lot of time when revisited later.
 %If you haven't made your analysis reproducible and you come back to it 6 months or a year later (quite common if you are submitting the results to an academic journal), you may look at the code and wonder what on earth you were thinking. If you have made the analysis reproducible and included plenty of comments about your thinking, then you save a lot of time trying to reproduce your previous work and state of mind. It also very useful if your data changes.    In our case, we updated just before writing up the paper so that we had the latest data off the website.  Data changes a lot more than you might think.  Even when your data is about something that has already happened, often the data will change  as errors are discovered and fixed.  Every statistician has a story about a nightmare client whose data would not stay the same from week-to-week.
 
 %Another tool that we find useful is source code control.  In an analogous way to software development, this makes it easy to discard parts of the analysis that led nowhere or have been superseded.  The code on the repository website indicates that (by and large) the analysis follows a fairly logical flow.  This is not how it starts off!  Data analysis is a fairly creative process, with many blind alleys, mistakes and alternative approaches.  Inclusion of all of these makes it hard to follow exactly what we did, but removing them completely makes it hard to see all the things that we tried.  
 %Using a code versioning system leaves us with a happy medium where the false paths are not immediately visible, but can be looked up (although current tools are somewhat lacking for this purpose).
-
-We enjoy working with data, exploring and learning from it.  We hope we have shared with you our enthusiasm for data analysis, and have shown you some of the tools and techniques that we find most useful.
 
 % Tools: shell (wget, awk,); perl; R (ggplot2, plyr, reshape).
 
@@ -373,8 +371,6 @@ We enjoy working with data, exploring and learning from it.  We hope we have sha
 % A little tricky because working on this data analysis also lead us to develop some new tools, and it takes some time for these to trickle into released versions.  If you have problems running the code we released, please let us know!  Data analysis like software development.  Local caches to speed things up and to provide some backup if the original sources go down.
 
 % Tension with interactive tools: they are great for discovery, but bad for reproducibility.  Once you have discovered something in your interactive tool, you need to be able to reproduce it independently so that others can see it too.  Area of active research (cite Heer's work).  
-
-
 
 % bibtool -x beautiful-data.aux > references.bib
 \bibliography{references}
