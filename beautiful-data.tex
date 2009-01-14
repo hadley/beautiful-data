@@ -133,7 +133,8 @@ For a broad overview of the changes in the housing market, we'll start with the 
 
 Figure~\ref{fig:daily} shows weekly average sale price and number of sales for the 293 weeks in the data.  There are some very interesting patterns.  The behavior of the average price is striking, with an increasing trend until June 2007 and then a precipitous drop to the present day ~--~ a clear illustration of the boom and bust in housing prices.  
 
-Sales look quite different.  We see a seasonal effect, with fewer sales in the winter months. (This may be a good place to note that the data only rarely includes the true closing date, so we're using the date when the sale was reported in the newspaper, which may be four to six weeks later than the closing.)  Once we look past the seasonal effect, we see something else. Starting by the middle of 2006, sales volume decreases until early 2008, then suddenly begins to rise again. One possibility is that by this point house prices had dropped enough that buyers were shopping for bargains again; some of these could even be foreclosure sales.
+Sales look quite different.  Most years (especially 2004 and 2005) show a marked seasonal effect, with a peak in mid to late summer and fewer sales in the winter months. (This may be a good place to note that the data only rarely includes the true closing date, so we're using the date when the sale was reported in the newspaper, which may be four to six weeks later than the closing.)  Once we look past the seasonal effect, we see something else. From the middle of 2006 until early 2008, sales volume decreases ~--~ this surely is an indicator of the housing bust.  However, the sharpness of the drop in early 2008 may also reflect the winter slowdown in sales.  And what about the increase starting in early 2008?
+One possibility is that by this point house prices had dropped enough that buyers were shopping for bargains with the arrival of spring.  Another possibility is that some of this increase is due to foreclosure sales.  Perhaps the explanation will be clearer in a few more months.
 
 \begin{figure}[htbp]
   \centering
@@ -350,7 +351,12 @@ All of this is consistent with what we have learned about sub-prime mortgages si
 
 We have used relatively simple statistical methods such as indexing, computing quantiles, smoothing and binning to explore this large and complex data set.  We began with broad summaries and then dug deeper to explore the details, but we have only scratched the surface.  If the data has caught your interest and you'd like to follow our work in more detail, or try out some your own ideas, you can find all data and code in a git repository at \url{https://github.com/hadley/sfhousing}.  All the code we wrote (R, perl, and shell scripts) run on open source software, so anyone can replicate our work without buying expensive software. The principle of reproducibility \citep{gentleman:2007}, so critical in the laboratory sciences, is also important here:  If we made a mistake, you can discover it, fix it and observe the effects on our conclusions.  
 
-We enjoy working with data, exploring and learning from it. We hope we have shared our enthusiasm for data analysis with you, and have shown you some of the strategies and techniques that we find most useful.
+Throughout this exercise, we have enjoyed the challenge of extracting,
+exploring, analyzing and ultimately gaining useful insights from these
+housing data. Further, we hope that the general description of our
+strategies, methods and techniques will prove useful to others who share
+our interest in working with, and learning from, real data.
+
 
 % [ Shall we list our tools?  Don't know. 
 % (linux, MacOS X are trademarked, so we'd need footnotes)]
